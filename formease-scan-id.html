@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FormEase — Scan ID Card</title>
+  <meta name="description" content="Upload your Aadhaar or PAN card and instantly extract your profile data with FormEase." />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; min-height: 100vh; }
+    body { font-family: 'DM Sans', sans-serif; background: #1e1e1e; color: #e2ddd8; }
+
+    .page { width: 100vw; min-height: 100vh; background: #242424; display: flex; flex-direction: column; }
+
+    /* ── TOP NAV ── */
+    .topnav {
+      display: flex; align-items: center;
+      padding: 0 28px; height: 58px;
+      background: #2b2b2b;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0; gap: 10px;
+    }
+    .back-link {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 15px; color: #888; cursor: pointer;
+      text-decoration: none; transition: color 0.15s; white-space: nowrap;
+    }
+    .back-link:hover { color: #bbb; }
+    .page-title { font-size: 18px; font-weight: 600; color: #f0ece6; letter-spacing: -0.3px; }
+
+    /* ── CONTENT GRID ── */
+    .content {
+      flex: 1; display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px; padding: 36px 36px 44px;
+      align-items: start;
+    }
+    .section-heading { font-size: 18px; font-weight: 600; color: #f0ece6; letter-spacing: -0.25px; margin-bottom: 18px; }
+
+    /* ── LEFT COL ── */
+    .left-col { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Tabs */
+    .id-tabs { display: flex; gap: 10px; margin-bottom: 4px; }
+    .tab {
+      flex: 1; padding: 11px 14px; border-radius: 10px;
+      font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; text-align: center;
+      border: 1.5px solid #4a4a4a; background: transparent; color: #d0ccc6;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .tab:hover { background: rgba(255,255,255,0.04); border-color: #666; }
+    .tab.active-amber { background: #3a2c08; border-color: #8a6a18; color: #c9a030; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 1.5px dashed #4a4a4a; border-radius: 14px;
+      padding: 32px 24px 28px; text-align: center;
+      background: #2a2a2a; display: flex;
+      flex-direction: column; align-items: center; gap: 12px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone.drag-over { border-color: #c9a030; background: rgba(201,160,48,0.05); }
+    .upload-hint { font-size: 15px; color: #a0a0a0; }
+
+    /* Preview inside upload zone */
+    .id-preview-wrap { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .id-preview-img {
+      width: 100%; max-height: 220px; object-fit: contain;
+      border-radius: 10px; background: #1e1e1e;
+    }
+    .id-preview-label { font-size: 12px; color: #52c481; }
+
+    .btn-camera {
+      width: 100%; padding: 13px 16px; border-radius: 10px;
+      background: #2e4a82; border: none; color: #90bde8;
+      font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-camera:hover { background: #375a9e; }
+    .btn-upload {
+      width: 100%; padding: 13px 16px; border-radius: 10px;
+      background: transparent; border: 1.5px solid #4a4a4a; color: #d0ccc6;
+      font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-upload:hover { background: rgba(255,255,255,0.05); border-color: #666; }
+    .btn-change-img {
+      padding: 8px 18px; border-radius: 8px;
+      background: transparent; border: 1px solid #4a4a4a; color: #888;
+      font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-change-img:hover { border-color: #666; color: #bbb; }
+
+    /* Privacy note */
+    .privacy-note {
+      background: #302508; border: 1.5px solid #6a4e10;
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .privacy-title { font-size: 14px; font-weight: 600; color: #c9a030; margin-bottom: 6px; }
+    .privacy-text { font-size: 13px; color: #a07820; line-height: 1.55; }
+
+    /* ── RIGHT COL ── */
+    .right-col { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Profile table */
+    .profile-table {
+      border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: #2a2a2a;
+    }
+    .profile-table-header {
+      padding: 13px 20px; background: #303030;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px; color: #666; font-weight: 400;
+    }
+    .profile-row {
+      display: flex; align-items: baseline;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      gap: 12px;
+    }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-row.address-row { flex-direction: column; align-items: flex-start; gap: 5px; }
+
+    .profile-label { font-size: 14px; color: #888; font-weight: 400; flex-shrink: 0; }
+    .profile-value { font-size: 15px; font-weight: 700; color: #f0ece6; text-align: right; }
+    .profile-value.address-val { font-size: 14px; font-weight: 600; color: #f0ece6; text-align: left; line-height: 1.5; }
+
+    /* Inline editable input */
+    .profile-input {
+      background: #1e1e1e; border: 1px solid #5a8ac0; border-radius: 6px;
+      color: #f0ece6; font-size: 14px; font-weight: 600;
+      font-family: 'DM Sans', sans-serif; padding: 5px 8px;
+      outline: none; min-width: 120px; max-width: 220px;
+      transition: border-color 0.2s;
+    }
+    .profile-input.address-input { width: 100%; max-width: 100%; }
+    .profile-input:focus { border-color: #90bde8; }
+
+    /* Empty state */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 48px 24px; gap: 10px; color: #555; text-align: center;
+    }
+    .empty-icon { font-size: 40px; opacity: 0.4; }
+    .empty-text { font-size: 14px; color: #555; line-height: 1.6; }
+
+    /* Action buttons */
+    .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-save {
+      padding: 14px 16px; border-radius: 10px;
+      background: #1a4a28; border: 1.5px solid #2a7040;
+      color: #52c481; font-size: 15px; font-weight: 600;
+      font-family: 'DM Sans', sans-serif; cursor: pointer;
+      text-align: center; transition: background 0.15s;
+    }
+    .btn-save:hover { background: #1e5830; }
+    .btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-edit {
+      padding: 14px 16px; border-radius: 10px;
+      background: transparent; border: 1.5px solid #4a4a4a; color: #d0ccc6;
+      font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; text-align: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-edit:hover { background: rgba(255,255,255,0.05); border-color: #666; }
+    .btn-edit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-rescan {
+      width: 100%; padding: 14px 16px; border-radius: 10px;
+      background: transparent; border: 1.5px solid #4a4a4a; color: #c0503a;
+      font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; text-align: center; transition: background 0.15s;
+    }
+    .btn-rescan:hover { background: rgba(192,80,58,0.08); }
+    .btn-rescan:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── LOADING OVERLAY ── */
+    .loading-overlay {
+      position: fixed; inset: 0;
+      background: rgba(18,18,18,0.82);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; flex-direction: column; gap: 18px;
+    }
+    .loading-overlay.visible { display: flex; }
+    .loading-spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #c9a030; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 16px; color: #d0ccc6; font-weight: 500; text-align: center; }
+    .loading-subtext { font-size: 13px; color: #666; text-align: center; max-width: 300px; line-height: 1.5; }
+    .loading-bar-wrap { width: 260px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+    .loading-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#8a6a18,#c9a030); border-radius: 4px; transition: width 0.5s ease; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      padding: 13px 26px; border-radius: 12px;
+      font-size: 14px; font-weight: 500; z-index: 1100;
+      opacity: 0; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+      pointer-events: none; max-width: 420px; text-align: center;
+    }
+    .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: #1a3a24; border: 1px solid #2a7a48; color: #52c481; }
+    .toast.error   { background: #3a1a1a; border: 1px solid #7a2828; color: #e07070; }
+    .toast.info    { background: #1a2a3a; border: 1px solid #2a4a7a; color: #6fa3e8; }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- TOP NAV -->
+  <div class="topnav">
+    <a class="back-link" href="formease-dashboard.html">
+      <span>←</span><span>Dashboard</span>
+    </a>
+    <span style="color:#444;font-size:20px;line-height:1;margin:0 2px">|</span>
+    <span class="page-title">Scan ID card — build your profile</span>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-col">
+      <div class="section-heading">Upload your ID</div>
+
+      <!-- ID type tabs -->
+      <div class="id-tabs">
+        <button class="tab active-amber" id="tabAadhaar" onclick="selectTab('aadhaar')">Aadhaar card</button>
+        <button class="tab" id="tabPan" onclick="selectTab('pan')">PAN card</button>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="uploadZone">
+        <!-- Upload UI (default) -->
+        <div id="uploadUI" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px">
+          <div class="upload-hint" id="uploadHint">Upload front side of your Aadhaar</div>
+          <button class="btn-camera" id="btnCamera">📷 Take photo of ID</button>
+          <button class="btn-upload" id="btnUpload">Upload from device</button>
+        </div>
+        <!-- Preview UI (shown after image selected) -->
+        <div class="id-preview-wrap" id="previewUI" style="display:none">
+          <img class="id-preview-img" id="previewImg" alt="ID preview" />
+          <div class="id-preview-label" id="previewLabel">⚡ Scanning with Gemini AI…</div>
+          <button class="btn-change-img" id="btnChangeImg">Change image</button>
+        </div>
+      </div>
+
+      <!-- Privacy note -->
+      <div class="privacy-note">
+        <div class="privacy-title">🔒 Privacy note</div>
+        <div class="privacy-text">Your ID image is sent to Gemini AI for OCR and deleted immediately. Only extracted text is stored locally in your browser. Aadhaar numbers are masked before storing.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+      <div class="section-heading">Extracted profile data</div>
+
+      <!-- Profile table -->
+      <div class="profile-table">
+        <div class="profile-table-header" id="tableHeader">Upload an ID to extract your data</div>
+        <div id="profileBody">
+          <!-- Empty state -->
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">🪪</div>
+            <div class="empty-text">Upload your Aadhaar or PAN card on the left.<br>Your profile data will appear here.</div>
+          </div>
+          <!-- Profile rows injected by JS -->
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-row">
+        <button class="btn-save" id="btnSave" disabled onclick="saveProfile()">Save to my profile</button>
+        <button class="btn-edit" id="btnEdit" disabled onclick="toggleEditMode()">Edit a field</button>
+      </div>
+      <button class="btn-rescan" id="btnRescan" disabled onclick="rescan()">Re-scan ID</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Hidden file inputs -->
+<input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none" />
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" />
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Analyzing ID…</div>
+  <div class="loading-subtext" id="loadingSubtext">Gemini AI is reading your ID card</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar" id="loadingBar"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ══════════════════════════════════════════════
+  //  CONFIG
+  // ══════════════════════════════════════════════
+  const API_KEY = 'AIzaSyDsi5uYztrBAY8MuQWaUjDw5juSzY5XGsg';
+  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
+
+  // ══════════════════════════════════════════════
+  //  callGemini — retries automatically on 429/503
+  //  Waits ONLY when Gemini actually says to.
+  // ══════════════════════════════════════════════
+  async function callGemini(body, retries = 4) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      let res;
+      try {
+        res = await fetch(GEMINI_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+      } catch (networkErr) {
+        if (attempt === retries) throw networkErr;
+        showToast('Network error — retrying…', 'info');
+        await new Promise(r => setTimeout(r, 3000));
+        continue;
+      }
+
+      // Handle 429 / 503 — wait only when Gemini says to
+      if (res.status === 429 || res.status === 503) {
+        const errBody = await res.clone().json().catch(() => ({}));
+        const errMsg = errBody.error?.message || '';
+
+        // Parse exact retry time from Gemini's message e.g. "retry in 8.43s"
+        let waitSec = parseInt(res.headers.get('Retry-After') || '0') || Math.pow(2, attempt + 1);
+        const match = errMsg.match(/retry in ([\d\.]+)s/i);
+        if (match) waitSec = Math.ceil(parseFloat(match[1])) + 1;
+
+        if (attempt < retries) {
+          showToast('Gemini busy — retrying in ' + waitSec + 's…', 'info');
+          for (let s = waitSec; s > 0; s--) {
+            document.getElementById('loadingSubtext').textContent =
+              'Gemini is busy — retrying in ' + s + 's…';
+            await new Promise(r => setTimeout(r, 1000));
+          }
+          document.getElementById('loadingSubtext').textContent = 'Retrying…';
+          continue;
+        } else {
+          throw new Error(errMsg || 'Gemini API rate limited. Please wait and try again.');
+        }
+      }
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error?.message || 'Gemini API error ' + res.status);
+      }
+
+      return res;
+    }
+    throw new Error('Max retries exceeded.');
+  }
+
+  // ══════════════════════════════════════════════
+  //  STATE
+  // ══════════════════════════════════════════════
+  const STATE = {
+    idType: 'aadhaar',       // 'aadhaar' | 'pan'
+    imageBase64: null,
+    imageMime: null,
+    extracted: null,         // extracted profile object
+    editMode: false,
+  };
+
+  // ══════════════════════════════════════════════
+  //  INIT
+  // ══════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btnUpload').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('btnCamera').addEventListener('click', () => document.getElementById('cameraInput').click());
+    document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+    document.getElementById('cameraInput').addEventListener('change', handleFileSelect);
+    document.getElementById('btnChangeImg').addEventListener('click', resetUpload);
+
+    // Drag & drop on upload zone
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+  });
+
+  // ══════════════════════════════════════════════
+  //  TAB SWITCHING
+  // ══════════════════════════════════════════════
+  function selectTab(type) {
+    STATE.idType = type;
+    document.getElementById('tabAadhaar').classList.toggle('active-amber', type === 'aadhaar');
+    document.getElementById('tabPan').classList.toggle('active-amber', type === 'pan');
+    document.getElementById('uploadHint').textContent =
+      type === 'aadhaar' ? 'Upload front side of your Aadhaar' : 'Upload front side of your PAN card';
+    // Reset if image was already selected
+    if (STATE.imageBase64) rescan();
+  }
+
+  // ══════════════════════════════════════════════
+  //  FILE HANDLING
+  // ══════════════════════════════════════════════
+  function handleFileSelect(e) {
+    if (e.target.files && e.target.files.length) handleFile(e.target.files[0]);
+    e.target.value = ''; // reset so same file can be reselected
+  }
+
+  function handleFile(file) {
+    if (!file.type.match(/^image\/(jpeg|png|webp|jpg)$/i)) {
+      showToast('Please upload a JPG, PNG or WebP image', 'error'); return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Image must be under 10 MB', 'error'); return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      const rawImg = new Image();
+      rawImg.onload = () => {
+        // Downscale to max 1500px for API efficiency
+        const maxDim = 1500;
+        let w = rawImg.width, h = rawImg.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else       { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(rawImg, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+        STATE.imageBase64 = dataUrl.split(',')[1];
+        STATE.imageMime = 'image/jpeg';
+
+        // Show preview
+        document.getElementById('previewImg').src = dataUrl;
+        document.getElementById('uploadUI').style.display = 'none';
+        document.getElementById('previewUI').style.display = 'flex';
+        document.getElementById('previewLabel').textContent = '⚡ Scanning with Gemini AI…';
+
+        // Start extraction
+        extractData();
+      };
+      rawImg.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ══════════════════════════════════════════════
+  //  GEMINI OCR EXTRACTION
+  // ══════════════════════════════════════════════
+  async function extractData() {
+    showLoading('Reading your ID card…', 'Gemini AI is extracting your details');
+    document.getElementById('loadingBar').style.width = '30%';
+
+    const isAadhaar = STATE.idType === 'aadhaar';
+
+    const prompt = isAadhaar
+      ? `You are an OCR engine for Indian government IDs. This is an Aadhaar card image.
+Extract ALL text visible on the card carefully.
+
+Return a JSON object with EXACTLY these keys (use null if any field is not visible):
+{
+  "full_name": "<full name as printed>",
+  "date_of_birth": "<DD/MM/YYYY or as printed>",
+  "gender": "<Male | Female | Other>",
+  "aadhaar_number": "<12-digit number with spaces, e.g. 1234 5678 9012>",
+  "address": "<full address as printed on the card>",
+  "father_name": "<father's name if visible, else null>"
+}
+
+CRITICAL: Keep the address exactly as printed. Return ONLY a raw JSON object. No markdown, no explanation.`
+      : `You are an OCR engine for Indian government IDs. This is a PAN card image.
+Extract ALL text visible on the card carefully.
+
+Return a JSON object with EXACTLY these keys (use null if any field is not visible):
+{
+  "full_name": "<name as printed>",
+  "father_name": "<father's name as printed>",
+  "date_of_birth": "<DD/MM/YYYY as printed>",
+  "pan_number": "<10-character PAN number, e.g. ABCDE1234F>"
+}
+
+Return ONLY a raw JSON object. No markdown, no explanation.`;
+
+    try {
+      document.getElementById('loadingBar').style.width = '55%';
+      // Use callGemini — auto-retries on 429 with countdown
+      const res = await callGemini({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: STATE.imageMime, data: STATE.imageBase64 } }
+          ]
+        }],
+        generationConfig: { temperature: 0, responseMimeType: 'application/json' }
+      });
+
+      const data = await res.json();
+      // Find the non-thought text part
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      let rawText = (parts.find(p => p.text && !p.thought) || {}).text || '';
+      rawText = rawText.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+
+      document.getElementById('loadingBar').style.width = '85%';
+
+      let extracted;
+      try { extracted = JSON.parse(rawText); }
+      catch (e) { throw new Error('Could not parse extracted data. Please try a clearer image.'); }
+
+      STATE.extracted = extracted;
+      renderProfileTable(extracted);
+      document.getElementById('previewLabel').textContent = '✓ Scanned successfully';
+      enableActions(true);
+      hideLoading();
+      showToast('✓ Profile data extracted!', 'success');
+
+    } catch (err) {
+      hideLoading();
+      document.getElementById('previewLabel').textContent = '✗ Scan failed — try again';
+      showToast('Extraction failed: ' + err.message, 'error');
+      console.error('extractData error:', err);
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  //  RENDER PROFILE TABLE
+  // ══════════════════════════════════════════════
+  function renderProfileTable(data) {
+    const isAadhaar = STATE.idType === 'aadhaar';
+    document.getElementById('tableHeader').textContent =
+      `Detected from ${isAadhaar ? 'Aadhaar card' : 'PAN card'}`;
+
+    const rows = isAadhaar ? buildAadhaarRows(data) : buildPanRows(data);
+    const body = document.getElementById('profileBody');
+    body.innerHTML = rows;
+  }
+
+  function buildAadhaarRows(d) {
+    const maskedAadhaar = maskAadhaar(d.aadhaar_number);
+    return `
+      ${profileRow('Full name',     d.full_name,     'full_name')}
+      ${profileRow('Date of birth', d.date_of_birth, 'date_of_birth')}
+      ${profileRow('Gender',        d.gender,        'gender')}
+      ${d.father_name ? profileRow("Father's name", d.father_name, 'father_name') : ''}
+      ${profileRowAddress(d.address)}
+      ${profileRow('Aadhaar',       maskedAadhaar,   'aadhaar_number', true)}
+    `;
+  }
+
+  function buildPanRows(d) {
+    return `
+      ${profileRow('Full name',     d.full_name,     'full_name')}
+      ${d.father_name ? profileRow("Father's name", d.father_name, 'father_name') : ''}
+      ${profileRow('Date of birth', d.date_of_birth, 'date_of_birth')}
+      ${profileRow('PAN number',    d.pan_number,    'pan_number')}
+    `;
+  }
+
+  function profileRow(label, value, key, readOnly = false) {
+    const display = value || '—';
+    return `<div class="profile-row" id="row-${key}">
+      <span class="profile-label">${label}</span>
+      <span class="profile-value" id="val-${key}" data-key="${key}">${display}</span>
+    </div>`;
+  }
+
+  function profileRowAddress(value) {
+    const display = value || '—';
+    return `<div class="profile-row address-row" id="row-address">
+      <span class="profile-label">Address</span>
+      <span class="profile-value address-val" id="val-address" data-key="address">${display}</span>
+    </div>`;
+  }
+
+  function maskAadhaar(num) {
+    if (!num) return '—';
+    const digits = num.replace(/\D/g, '');
+    if (digits.length !== 12) return num; // can't mask, show raw
+    return 'XXXX XXXX ' + digits.slice(8);
+  }
+
+  // ══════════════════════════════════════════════
+  //  EDIT MODE
+  // ══════════════════════════════════════════════
+  function toggleEditMode() {
+    STATE.editMode = !STATE.editMode;
+    const btn = document.getElementById('btnEdit');
+
+    if (STATE.editMode) {
+      btn.textContent = '✓ Done editing';
+      btn.style.borderColor = '#52c481';
+      btn.style.color = '#52c481';
+      // Convert all value spans to inputs
+      document.querySelectorAll('.profile-value, .profile-value.address-val').forEach(span => {
+        const key = span.dataset.key;
+        if (!key) return;
+        const isAddress = key === 'address';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = isAddress ? 'profile-input address-input' : 'profile-input';
+        input.value = STATE.extracted[key] || '';
+        input.dataset.key = key;
+        input.id = 'inp-' + key;
+        span.replaceWith(input);
+      });
+    } else {
+      btn.textContent = 'Edit a field';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      // Save inputs back to STATE and rebuild spans
+      document.querySelectorAll('.profile-input').forEach(input => {
+        STATE.extracted[input.dataset.key] = input.value.trim() || null;
+      });
+      renderProfileTable(STATE.extracted);
+      showToast('Changes saved', 'success');
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  //  SAVE TO PROFILE (localStorage)
+  // ══════════════════════════════════════════════
+  function saveProfile() {
+    if (!STATE.extracted) return;
+    if (STATE.editMode) toggleEditMode(); // commit edits first
+
+    const profile = JSON.parse(localStorage.getItem('formease_profile') || '{}');
+
+    if (STATE.idType === 'aadhaar') {
+      profile.full_name      = STATE.extracted.full_name || profile.full_name;
+      profile.date_of_birth  = STATE.extracted.date_of_birth || profile.date_of_birth;
+      profile.gender         = STATE.extracted.gender || profile.gender;
+      profile.address        = STATE.extracted.address || profile.address;
+      profile.father_name    = STATE.extracted.father_name || profile.father_name;
+      // Store full Aadhaar masked
+      profile.aadhaar        = maskAadhaar(STATE.extracted.aadhaar_number);
+      profile.aadhaar_source = 'aadhaar_scan';
+    } else {
+      profile.full_name      = STATE.extracted.full_name || profile.full_name;
+      profile.date_of_birth  = STATE.extracted.date_of_birth || profile.date_of_birth;
+      profile.father_name    = STATE.extracted.father_name || profile.father_name;
+      profile.pan_number     = STATE.extracted.pan_number || profile.pan_number;
+      profile.pan_source     = 'pan_scan';
+    }
+
+    profile.last_updated = new Date().toISOString();
+    localStorage.setItem('formease_profile', JSON.stringify(profile));
+    showToast('✓ Profile saved successfully!', 'success');
+
+    // Visual feedback on save button
+    const btn = document.getElementById('btnSave');
+    btn.textContent = '✓ Saved!';
+    btn.style.background = '#0f3a1e';
+    setTimeout(() => {
+      btn.textContent = 'Save to my profile';
+      btn.style.background = '';
+    }, 2000);
+  }
+
+  // ══════════════════════════════════════════════
+  //  RESET / RESCAN
+  // ══════════════════════════════════════════════
+  function rescan() {
+    STATE.imageBase64 = null;
+    STATE.imageMime = null;
+    STATE.extracted = null;
+    STATE.editMode = false;
+
+    document.getElementById('uploadUI').style.display = 'flex';
+    document.getElementById('previewUI').style.display = 'none';
+    document.getElementById('previewImg').src = '';
+    document.getElementById('tableHeader').textContent = 'Upload an ID to extract your data';
+    document.getElementById('profileBody').innerHTML = `
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🪪</div>
+        <div class="empty-text">Upload your Aadhaar or PAN card on the left.<br>Your profile data will appear here.</div>
+      </div>`;
+
+    const btnEdit = document.getElementById('btnEdit');
+    btnEdit.textContent = 'Edit a field';
+    btnEdit.style.borderColor = '';
+    btnEdit.style.color = '';
+
+    enableActions(false);
+    document.getElementById('fileInput').value = '';
+    document.getElementById('cameraInput').value = '';
+  }
+
+  function resetUpload() { rescan(); }
+
+  function enableActions(on) {
+    document.getElementById('btnSave').disabled   = !on;
+    document.getElementById('btnEdit').disabled   = !on;
+    document.getElementById('btnRescan').disabled = !on;
+  }
+
+  // ══════════════════════════════════════════════
+  //  UI HELPERS
+  // ══════════════════════════════════════════════
+  function showLoading(msg, sub) {
+    document.getElementById('loadingText').textContent = msg || 'Processing…';
+    document.getElementById('loadingSubtext').textContent = sub || 'Please wait…';
+    document.getElementById('loadingBar').style.width = '10%';
+    document.getElementById('loadingOverlay').classList.add('visible');
+  }
+
+  function hideLoading() {
+    document.getElementById('loadingBar').style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('loadingOverlay').classList.remove('visible');
+      document.getElementById('loadingBar').style.width = '0%';
+    }, 350);
+  }
+
+  let toastTimer = null;
+  function showToast(msg, type) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast ' + (type || 'info');
+    clearTimeout(toastTimer);
+    requestAnimationFrame(() => {
+      toast.classList.add('visible');
+      toastTimer = setTimeout(() => toast.classList.remove('visible'), 4000);
+    });
+  }
+</script>
+</body>
+</html>

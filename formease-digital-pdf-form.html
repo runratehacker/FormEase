@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FormEase — Fill Digital PDF Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #1e1e1e;
+      color: #e2ddd8;
+    }
+
+    /* ── PAGE SHELL ── */
+    .page {
+      width: 100vw;
+      min-height: 100vh;
+      background: #222222;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP NAV BAR ── */
+    .topnav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 58px;
+      background: #2b2b2b;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0;
+    }
+
+    .topnav-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 15px;
+      color: #888;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: #bbb; }
+
+    .page-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #f0ece6;
+      letter-spacing: -0.2px;
+    }
+
+    /* ── MAIN CONTENT GRID ── */
+    .content {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      padding: 36px 36px 40px;
+      align-items: start;
+    }
+
+    /* ── SECTION HEADINGS ── */
+    .section-heading {
+      font-size: 17px;
+      font-weight: 600;
+      color: #f0ece6;
+      letter-spacing: -0.2px;
+      margin-bottom: 16px;
+    }
+
+    /* ─────────────────────────
+       LEFT COLUMN
+    ───────────────────────── */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+      border: 1.5px dashed #4a4a4a;
+      border-radius: 14px;
+      padding: 36px 24px 28px;
+      text-align: center;
+      background: #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .upload-hint {
+      font-size: 15px;
+      color: #a0a0a0;
+      margin-bottom: 18px;
+    }
+
+    .btn-choose {
+      padding: 11px 26px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid #555;
+      color: #d8d4ce;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      margin-bottom: 16px;
+    }
+    .btn-choose:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: #777;
+    }
+
+    .upload-note {
+      font-size: 13px;
+      color: #5a5a5a;
+    }
+
+    /* ── Speak section ── */
+    .speak-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .speak-box {
+      background: #2a2a2a;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.09);
+      padding: 18px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .speak-hint {
+      font-size: 14px;
+      color: #777;
+      line-height: 1.5;
+    }
+
+    .btn-voice {
+      width: 100%;
+      padding: 15px 16px;
+      border-radius: 10px;
+      background: #7a2828;
+      border: none;
+      color: #e07070;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: -0.1px;
+      transition: background 0.15s;
+    }
+    .btn-voice:hover { background: #8f3232; }
+
+    .secondary-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid #444;
+      color: #d0ccc6;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: #666;
+    }
+
+    /* ─────────────────────────
+       RIGHT COLUMN
+    ───────────────────────── */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ── PDF Preview box ── */
+    .pdf-preview {
+      background: #2a2a2a;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .pdf-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      border: 1.5px solid #4a4a4a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+
+    .pdf-preview-text {
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ── Action buttons grid ── */
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-action {
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid #444;
+      color: #d0ccc6;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-action:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: #666;
+    }
+
+    .btn-action.disabled {
+      color: #4a4a4a;
+      border-color: #333;
+      cursor: not-allowed;
+      font-weight: 400;
+    }
+    .btn-action.disabled:hover {
+      background: transparent;
+      border-color: #333;
+    }
+
+    .btn-startover {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid #444;
+      color: #c0503a;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s;
+    }
+    .btn-startover:hover { background: rgba(192,80,58,0.08); }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ── TOP NAV ── -->
+  <div class="topnav">
+    <div class="topnav-left">
+      <a class="back-link" href="formease-dashboard.html">
+        <span>←</span>
+        <span>Dashboard</span>
+      </a>
+      <span style="color:#444; font-size:18px; margin: 0 2px;">|</span>
+      <span class="page-title">Fill digital PDF form</span>
+    </div>
+  </div>
+
+  <!-- ── CONTENT ── -->
+  <div class="content">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-col">
+
+      <!-- 1. Upload your PDF -->
+      <div>
+        <div class="section-heading">1. Upload your PDF</div>
+        <div class="upload-zone">
+          <div class="upload-hint">Drop PDF here or</div>
+          <button class="btn-choose">Choose PDF file</button>
+          <div class="upload-note">Max 25 MB · Fillable or scanned PDFs supported</div>
+        </div>
+      </div>
+
+      <!-- 2. Speak your answers -->
+      <div class="speak-section">
+        <div class="section-heading">2. Speak your answers</div>
+        <div class="speak-box">
+          <div class="speak-hint">FormEase will ask you each field one at a time. Just speak your answer.</div>
+          <button class="btn-voice">
+            <span>🎙</span>
+            Start guided voice fill
+          </button>
+          <div class="secondary-btns">
+            <button class="btn-secondary">Fill all at once</button>
+            <button class="btn-secondary">Manual typing</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+
+      <!-- 3. PDF Preview -->
+      <div class="section-heading">3. PDF preview with filled fields</div>
+
+      <div class="pdf-preview">
+        <div class="pdf-icon">
+          <svg width="22" height="26" viewBox="0 0 22 26" fill="none">
+            <rect x="1" y="1" width="18" height="24" rx="3" stroke="#555" stroke-width="1.5"/>
+            <line x1="5" y1="9"  x2="15" y2="9"  stroke="#555" stroke-width="1.3" stroke-linecap="round"/>
+            <line x1="5" y1="13" x2="15" y2="13" stroke="#555" stroke-width="1.3" stroke-linecap="round"/>
+            <line x1="5" y1="17" x2="11" y2="17" stroke="#555" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="pdf-preview-text">PDF preview appears here<br>after upload</div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-grid">
+        <button class="btn-action disabled" disabled>Download filled PDF</button>
+        <button class="btn-action">Edit a field</button>
+      </div>
+
+      <div class="action-grid">
+        <button class="btn-action">Share via email</button>
+        <button class="btn-action">Share via WhatsApp</button>
+      </div>
+
+      <button class="btn-startover">Start over</button>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

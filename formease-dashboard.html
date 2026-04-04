@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FormEase — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #1c1c1c;
+      color: #e8e4de;
+      min-height: 100vh;
+    }
+
+    /* ───────────────────────────
+       SHELL — fills entire screen
+    ─────────────────────────── */
+    .shell {
+      display: flex;
+      width: 100vw;
+      min-height: 100vh;
+      background: #222222;
+    }
+
+    /* ───────────────────────────
+       SIDEBAR
+    ─────────────────────────── */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      min-height: 100vh;
+      background: #1e1e1e;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      flex-direction: column;
+      padding: 32px 0 28px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .sidebar-brand {
+      padding: 0 24px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 4px;
+    }
+
+    .sidebar-brand .logo-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #f0ece6;
+      letter-spacing: -0.3px;
+    }
+
+    .sidebar-brand .logo-tag {
+      font-size: 13px;
+      color: #6b6b6b;
+      margin-top: 3px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 400;
+      color: #8a8a8a;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      user-select: none;
+      letter-spacing: -0.1px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,0.05);
+      color: #d0ccc6;
+    }
+
+    .nav-item.active {
+      background: #253550;
+      color: #7aace0;
+      font-weight: 500;
+    }
+
+    .sidebar-footer {
+      padding: 20px 24px 0;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .sidebar-footer .logged-in {
+      font-size: 12px;
+      color: #555;
+    }
+
+    .sidebar-footer .sign-out {
+      font-size: 14px;
+      color: #d46450;
+      cursor: pointer;
+      margin-top: 6px;
+      display: inline-block;
+      transition: opacity 0.15s;
+    }
+
+    .sidebar-footer .sign-out:hover { opacity: 0.75; }
+
+    /* ───────────────────────────
+       MAIN CONTENT
+    ─────────────────────────── */
+    .main {
+      flex: 1;
+      padding: 44px 52px 52px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 36px;
+    }
+
+    .topbar-left h1 {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.6px;
+      color: #f0ece6;
+      line-height: 1.15;
+    }
+
+    .topbar-left p {
+      font-size: 15px;
+      color: #7a7a7a;
+      margin-top: 5px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .badge-green {
+      background: #1e4530;
+      color: #52c481;
+      padding: 7px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .avatar-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #253550;
+      color: #7aace0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    /* ───────────────────────────
+       FEATURE CARDS
+    ─────────────────────────── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 42px;
+    }
+
+    .fcard {
+      border-radius: 18px;
+      padding: 26px 26px 24px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.18s ease, filter 0.18s ease;
+      min-height: 240px;
+    }
+
+    .fcard:hover {
+      transform: translateY(-3px);
+      filter: brightness(1.07);
+    }
+
+    .fcard.red {
+      background: #3d1f1c;
+      border: 1px solid rgba(200, 90, 75, 0.25);
+    }
+    .fcard.blue {
+      background: #1b2b40;
+      border: 1px solid rgba(90, 140, 200, 0.25);
+    }
+    .fcard.gold {
+      background: #2c2208;
+      border: 1px solid rgba(190, 150, 30, 0.28);
+    }
+
+    .fcard-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    .red  .fcard-icon { background: rgba(200,90,75,0.18); }
+    .blue .fcard-icon { background: rgba(90,140,200,0.18); }
+    .gold .fcard-icon { background: rgba(190,150,30,0.18); }
+
+    .fcard-title {
+      font-size: 19px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
+    }
+
+    .red  .fcard-title { color: #d9705e; }
+    .blue .fcard-title { color: #6fa3d8; }
+    .gold .fcard-title { color: #c59b2a; }
+
+    .fcard-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      flex: 1;
+      margin-bottom: 22px;
+    }
+
+    .red  .fcard-desc { color: rgba(217,112,94,0.65); }
+    .blue .fcard-desc { color: rgba(111,163,216,0.65); }
+    .gold .fcard-desc { color: rgba(197,155,42,0.65); }
+
+    .fcard-btn {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      border: none;
+      cursor: pointer;
+      letter-spacing: -0.1px;
+      transition: filter 0.15s;
+    }
+
+    .fcard-btn:hover { filter: brightness(1.12); }
+
+    .red  .fcard-btn { background: #7a3028; color: #d9705e; }
+    .blue .fcard-btn { background: #264265; color: #6fa3d8; }
+    .gold .fcard-btn { background: #594910; color: #c59b2a; }
+
+    /* ───────────────────────────
+       RECENT FORMS TABLE
+    ─────────────────────────── */
+    .section-heading {
+      font-size: 19px;
+      font-weight: 600;
+      color: #f0ece6;
+      letter-spacing: -0.3px;
+      margin-bottom: 14px;
+    }
+
+    .table-wrap {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #1e1e1e;
+    }
+
+    .table-head {
+      display: grid;
+      grid-template-columns: 3fr 1.4fr 1.5fr 1fr;
+      padding: 13px 24px;
+      background: rgba(255,255,255,0.025);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .table-head span {
+      font-size: 13px;
+      color: #555;
+      font-weight: 500;
+      letter-spacing: 0.1px;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 3fr 1.4fr 1.5fr 1fr;
+      padding: 17px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      align-items: center;
+      transition: background 0.12s;
+    }
+
+    .table-row:last-child { border-bottom: none; }
+    .table-row:hover { background: rgba(255,255,255,0.02); }
+
+    .row-name {
+      font-size: 15px;
+      color: #d8d4ce;
+      font-weight: 400;
+      letter-spacing: -0.1px;
+    }
+
+    .type-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 0;
+      width: 88px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .type-pill.pdf   { background: #1e3a5f; color: #6fa3d8; }
+    .type-pill.photo { background: #3d1f1c; color: #d9705e; }
+
+    .row-date {
+      font-size: 14px;
+      color: #7a7a7a;
+    }
+
+    .dl-btn {
+      padding: 8px 20px;
+      border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.13);
+      background: transparent;
+      color: #d0ccc6;
+      font-size: 13px;
+      font-weight: 400;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.14s, border-color 0.14s;
+      white-space: nowrap;
+    }
+
+    .dl-btn:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.22);
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-name">FormEase</div>
+      <div class="logo-tag">Accessibility platform</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="window.location.href='formease-dashboard.html'">Dashboard</div>
+      <div class="nav-item" onclick="window.location.href='formease-physical-form.html'">Physical form</div>
+      <div class="nav-item" onclick="window.location.href='formease-digital-pdf-form.html'">Digital PDF form</div>
+      <div class="nav-item" onclick="window.location.href='formease-scan-id.html'">Scan ID card</div>
+      <div class="nav-item">Form history</div>
+      <div class="nav-item">My profile</div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="logged-in">Logged in as Raj</div>
+      <span class="sign-out">Sign out</span>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Good morning, Raj</h1>
+        <p>What would you like to fill today?</p>
+      </div>
+      <div class="topbar-right">
+        <span class="badge-green">Profile complete</span>
+        <div class="avatar-circle">R</div>
+      </div>
+    </div>
+
+    <!-- Feature cards -->
+    <div class="cards-grid">
+
+      <!-- Physical form -->
+      <div class="fcard red" onclick="window.location.href='formease-physical-form.html'">
+        <div class="fcard-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="2" y="2" width="18" height="18" rx="3.5" stroke="#d9705e" stroke-width="1.7"/>
+            <line x1="7" y1="11" x2="15" y2="11" stroke="#d9705e" stroke-width="1.7" stroke-linecap="round"/>
+            <line x1="11" y1="7"  x2="11" y2="15" stroke="#d9705e" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="fcard-title">Fill physical form</div>
+        <div class="fcard-desc">Photo → voice → download</div>
+        <button class="fcard-btn" onclick="window.location.href='formease-physical-form.html'">Open →</button>
+      </div>
+
+      <!-- Digital PDF -->
+      <div class="fcard blue" onclick="window.location.href='formease-digital-pdf-form.html'">
+        <div class="fcard-icon">
+          <svg width="20" height="22" viewBox="0 0 20 22" fill="none">
+            <rect x="1" y="1" width="16" height="20" rx="3.5" stroke="#6fa3d8" stroke-width="1.7"/>
+            <line x1="5" y1="7.5"  x2="13" y2="7.5"  stroke="#6fa3d8" stroke-width="1.4" stroke-linecap="round"/>
+            <line x1="5" y1="11.5" x2="13" y2="11.5" stroke="#6fa3d8" stroke-width="1.4" stroke-linecap="round"/>
+            <line x1="5" y1="15.5" x2="10" y2="15.5" stroke="#6fa3d8" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="fcard-title">Fill digital PDF</div>
+        <div class="fcard-desc">Upload PDF → voice → download</div>
+        <button class="fcard-btn" onclick="window.location.href='formease-digital-pdf-form.html'">Open →</button>
+      </div>
+
+      <!-- Scan ID -->
+      <div class="fcard gold" onclick="window.location.href='formease-scan-id.html'">
+        <div class="fcard-icon">
+          <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
+            <rect x="1" y="1" width="20" height="16" rx="3.5" stroke="#c59b2a" stroke-width="1.7"/>
+            <circle cx="11" cy="9" r="3.2" stroke="#c59b2a" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="fcard-title">Scan ID card</div>
+        <div class="fcard-desc">Aadhaar or PAN → auto-profile</div>
+        <button class="fcard-btn" onclick="window.location.href='formease-scan-id.html'">Open →</button>
+      </div>
+
+    </div>
+
+    <!-- Recent forms -->
+    <div class="section-heading">Recent forms</div>
+    <div class="table-wrap">
+
+      <div class="table-head">
+        <span>Form name</span>
+        <span>Type</span>
+        <span>Date</span>
+        <span>Action</span>
+      </div>
+
+      <div class="table-row">
+        <span class="row-name">Bank account opening form</span>
+        <span><span class="type-pill pdf">PDF</span></span>
+        <span class="row-date">28 Mar 2026</span>
+        <span><button class="dl-btn">Download</button></span>
+      </div>
+
+      <div class="table-row">
+        <span class="row-name">Hospital registration form</span>
+        <span><span class="type-pill photo">Photo</span></span>
+        <span class="row-date">22 Mar 2026</span>
+        <span><button class="dl-btn">Download</button></span>
+      </div>
+
+      <div class="table-row">
+        <span class="row-name">Pension scheme application</span>
+        <span><span class="type-pill photo">Photo</span></span>
+        <span class="row-date">15 Mar 2026</span>
+        <span><button class="dl-btn">Download</button></span>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

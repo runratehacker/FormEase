@@ -1,0 +1,3067 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FormEase — Fill Physical Form</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Open+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100vh;
+      background: #1a1a1a;
+      font-family: 'DM Sans', sans-serif;
+      color: #e2ddd8;
+    }
+
+    /* ── PAGE SHELL ── */
+    .page {
+      width: 100vw;
+      min-height: 100vh;
+      background: #222222;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP NAV BAR ── */
+    .topnav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: #2a2a2a;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+
+    .topnav-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      color: #a0a0a0;
+      cursor: pointer;
+      transition: color 0.15s;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: #d0ccc6;
+    }
+
+    .back-arrow {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .divider-dot {
+      color: #555;
+      font-size: 15px;
+    }
+
+    .page-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #f0ece6;
+      letter-spacing: -0.2px;
+    }
+
+    .topnav-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dots-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      transition: background 0.15s;
+    }
+
+    .dots-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .dots-btn span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #a0a0a0;
+      display: block;
+    }
+
+    /* ── STEPPER BAR ── */
+    .stepper {
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      height: 64px;
+      background: #252525;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      flex-shrink: 0;
+      gap: 0;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .step-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+
+    .step-num.active {
+      background: #3b6dbf;
+      color: #fff;
+    }
+
+    .step-num.inactive {
+      background: transparent;
+      border: 1.5px solid #4a4a4a;
+      color: #666;
+    }
+
+    .step-num.done {
+      background: #1e6e3e;
+      color: #fff;
+      border: none;
+    }
+
+    .step-label {
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .step-label.active {
+      color: #6fa3e8;
+    }
+
+    .step-label.inactive {
+      color: #666;
+    }
+
+    .step-label.done {
+      color: #52c481;
+    }
+
+    .step-line {
+      flex: 1;
+      height: 1px;
+      background: #3a3a3a;
+      margin: 0 16px;
+      min-width: 40px;
+      transition: background 0.3s ease;
+    }
+
+    .step-line.done {
+      background: #2a7a48;
+    }
+
+    /* ── MAIN CONTENT GRID ── */
+    .content {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 32px;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* ── SECTION HEADINGS ── */
+    .section-heading {
+      font-size: 17px;
+      font-weight: 600;
+      color: #f0ece6;
+      letter-spacing: -0.2px;
+      margin-bottom: 16px;
+    }
+
+    /* ── LEFT COLUMN ── */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 1.5px dashed #4a4a4a;
+      border-radius: 14px;
+      padding: 40px 24px 28px;
+      text-align: center;
+      background: #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .upload-zone.drag-active {
+      border-color: #6fa3e8;
+      background: rgba(59, 109, 191, 0.08);
+    }
+
+    .upload-zone.has-preview {
+      border-style: solid;
+      border-color: rgba(255, 255, 255, 0.12);
+      padding: 16px;
+    }
+
+    .upload-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      border: 1.5px solid #4a4a4a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      background: transparent;
+    }
+
+    .upload-icon-wrap svg {
+      display: block;
+    }
+
+    .upload-hint {
+      font-size: 15px;
+      color: #a0a0a0;
+      margin-bottom: 18px;
+    }
+
+    .upload-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-gallery {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid #4a4a4a;
+      color: #d0ccc6;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-gallery:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: #666;
+    }
+
+    .btn-camera {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #2e4a82;
+      border: none;
+      color: #90bde8;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-camera:hover {
+      background: #365a9e;
+    }
+
+    .upload-note {
+      font-size: 12px;
+      color: #555;
+      margin-top: 14px;
+    }
+
+    /* Preview */
+    .preview-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .preview-img {
+      width: 100%;
+      max-height: 340px;
+      object-fit: contain;
+      border-radius: 10px;
+      background: #1e1e1e;
+    }
+
+    .btn-change {
+      padding: 9px 20px;
+      border-radius: 8px;
+      background: transparent;
+      border: 1px solid #4a4a4a;
+      color: #a0a0a0;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-change:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: #666;
+      color: #d0ccc6;
+    }
+
+    /* Step 2 — Speak */
+    .speak-box {
+      background: #2a2a2a;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 16px 18px;
+      transition: opacity 0.3s;
+    }
+
+    .speak-box.disabled-section {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .speak-hint {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+      min-height: 28px;
+    }
+
+    .tag {
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .tag.green {
+      background: #1e4530;
+      color: #52c481;
+    }
+
+    .tag.amber {
+      background: #3a2e10;
+      color: #c59b2a;
+    }
+
+    .tag.neutral {
+      background: #333;
+      color: #888;
+    }
+
+    .speak-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-speak {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: #7a2828;
+      border: none;
+      color: #e07070;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-speak:hover {
+      background: #8f3030;
+    }
+
+    .btn-speak:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-speak:disabled:hover {
+      background: #7a2828;
+    }
+
+    .btn-speak.recording {
+      background: #a03030;
+      box-shadow: 0 0 0 0 rgba(224, 112, 112, 0.5);
+      animation: pulse-rec 1.5s infinite;
+    }
+
+    @keyframes pulse-rec {
+      0% {
+        box-shadow: 0 0 0 0 rgba(224, 112, 112, 0.5);
+      }
+
+      70% {
+        box-shadow: 0 0 0 12px rgba(224, 112, 112, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(224, 112, 112, 0);
+      }
+    }
+
+    .mic-icon {
+      font-size: 15px;
+    }
+
+    .btn-type {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid #4a4a4a;
+      color: #d0ccc6;
+      font-size: 15px;
+      font-weight: 400;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-type:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .btn-type:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Transcript display */
+    .transcript-area {
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: #252525;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      display: none;
+    }
+
+    .transcript-area.visible {
+      display: block;
+    }
+
+    .transcript-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .transcript-text {
+      font-size: 15px;
+      color: #d8d4ce;
+      line-height: 1.6;
+      min-height: 20px;
+    }
+
+    /* Type textarea */
+    .type-area {
+      margin-top: 14px;
+      display: none;
+    }
+
+    .type-area.visible {
+      display: block;
+    }
+
+    .type-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: #252525;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2ddd8;
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .type-textarea:focus {
+      border-color: #5a8ac0;
+    }
+
+    .type-textarea::placeholder {
+      color: #555;
+    }
+
+    .btn-submit-text {
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #2e4a82;
+      border: none;
+      color: #90bde8;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-submit-text:hover {
+      background: #365a9e;
+    }
+
+    /* ── RIGHT COLUMN ── */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Fields table */
+    .fields-box {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #252525;
+    }
+
+    .fields-header {
+      padding: 12px 18px;
+      background: #2e2e2e;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      font-size: 13px;
+      color: #666;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .fields-count {
+      font-size: 12px;
+      color: #555;
+      font-weight: 400;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      transition: background 0.12s;
+    }
+
+    .field-row:last-child {
+      border-bottom: none;
+    }
+
+    .field-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .field-label {
+      font-size: 14px;
+      color: #a0a0a0;
+      font-weight: 400;
+      flex-shrink: 0;
+      max-width: 140px;
+    }
+
+    .field-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .field-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f0ece6;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.15s;
+      max-width: 220px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .field-value:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .field-input {
+      background: #1e1e1e;
+      border: 1px solid #5a8ac0;
+      border-radius: 6px;
+      color: #f0ece6;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      padding: 5px 8px;
+      outline: none;
+      width: 200px;
+    }
+
+    .check-icon {
+      color: #52c481;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .x-icon {
+      color: #666;
+      font-size: 14px;
+      cursor: pointer;
+      line-height: 1;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .x-icon:hover {
+      color: #d9705e;
+    }
+
+    .awaiting {
+      font-size: 13px;
+      color: #c59b2a;
+      font-style: italic;
+    }
+
+    .fields-empty {
+      padding: 32px 18px;
+      text-align: center;
+      color: #555;
+      font-size: 14px;
+    }
+
+    /* Step 4 — Download */
+    .download-box {
+      background: #252525;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 16px 18px;
+      transition: opacity 0.3s;
+    }
+
+    .download-box.disabled-section {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .download-note {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 14px;
+    }
+
+    .download-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-download {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid #3a3a3a;
+      color: #555;
+      font-size: 15px;
+      font-weight: 400;
+      font-family: 'DM Sans', sans-serif;
+      cursor: not-allowed;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .btn-download.enabled {
+      border-color: #2a7a48;
+      color: #52c481;
+      background: #1a3a24;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-download.enabled:hover {
+      background: #1e4a2c;
+      border-color: #35944d;
+    }
+
+    .btn-whatsapp {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid #4a4a4a;
+      color: #d0ccc6;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-whatsapp:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: #666;
+    }
+
+    /* ── LOADING OVERLAY ── */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 20, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .loading-overlay.visible {
+      display: flex;
+    }
+
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(255, 255, 255, 0.12);
+      border-top-color: #6fa3e8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      color: #d0ccc6;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .loading-subtext {
+      font-size: 13px;
+      color: #666;
+      text-align: center;
+      max-width: 320px;
+      line-height: 1.5;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1100;
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+      pointer-events: none;
+      max-width: 440px;
+      text-align: center;
+    }
+
+    .toast.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      background: #1a3a24;
+      border: 1px solid #2a7a48;
+      color: #52c481;
+    }
+
+    .toast.error {
+      background: #3a1a1a;
+      border: 1px solid #7a2828;
+      color: #e07070;
+    }
+
+    .toast.info {
+      background: #1a2a3a;
+      border: 1px solid #2a4a7a;
+      color: #6fa3e8;
+    }
+
+    /* ── DRAG-ADJUST MODAL ── */
+    .drag-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.96);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .drag-modal.visible {
+      display: flex;
+    }
+    .drag-modal-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: #1e1e1e;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0;
+      gap: 16px;
+    }
+    .drag-modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f0ece6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drag-modal-title .badge {
+      background: #2e4a82;
+      color: #6fa3e8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+    }
+    .drag-modal-hint {
+      font-size: 13px;
+      color: #666;
+      flex: 1;
+      text-align: center;
+    }
+    .drag-modal-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn-drag-cancel {
+      padding: 8px 18px;
+      border-radius: 8px;
+      background: transparent;
+      border: 1px solid #3a3a3a;
+      color: #888;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-drag-cancel:hover { border-color: #555; color: #bbb; }
+    .btn-drag-confirm {
+      padding: 8px 22px;
+      border-radius: 8px;
+      background: #1e6e3e;
+      border: none;
+      color: #52c481;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-drag-confirm:hover { background: #256e45; }
+    .drag-modal-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    /* Canvas scroll area */
+    .drag-canvas-wrap {
+      flex: 1;
+      overflow: auto;
+      background: #111;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+    }
+    .drag-canvas-container {
+      position: relative;
+      display: inline-block;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    #dragFormCanvas {
+      display: block;
+      border-radius: 6px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+    /* Draggable text label */
+    .drag-label {
+      position: absolute;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+    .drag-label:active { cursor: grabbing; }
+    .drag-label-inner {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+    }
+    .drag-label-text {
+      /* styled dynamically via JS */
+      line-height: 1;
+      white-space: nowrap;
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 500;
+    }
+    .drag-label-handle {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #3b6dbf;
+      border: 2px solid #6fa3e8;
+      margin-left: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px rgba(111,163,232,0.6);
+      transition: box-shadow 0.2s;
+    }
+    .drag-label:hover .drag-label-handle,
+    .drag-label.dragging .drag-label-handle {
+      box-shadow: 0 0 12px rgba(111,163,232,0.9);
+      background: #5a94e8;
+    }
+    .drag-label.active-label .drag-label-handle {
+      background: #e8a83b;
+      border-color: #f0c86a;
+      box-shadow: 0 0 12px rgba(240,200,106,0.8);
+    }
+    /* Sidebar panel */
+    .drag-sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: #1a1a1a;
+      border-left: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .drag-sidebar-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 12px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .drag-fields-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+    .drag-fields-list::-webkit-scrollbar { width: 4px; }
+    .drag-fields-list::-webkit-scrollbar-track { background: transparent; }
+    .drag-fields-list::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    .drag-field-item {
+      padding: 10px 16px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .drag-field-item:hover { background: rgba(255,255,255,0.03); }
+    .drag-field-item.active {
+      border-left-color: #e8a83b;
+      background: rgba(232,168,59,0.07);
+    }
+    .drag-field-item-label {
+      font-size: 12px;
+      color: #888;
+      font-weight: 500;
+    }
+    .drag-field-item-value {
+      font-size: 13px;
+      color: #d0ccc6;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Controls panel */
+    .drag-controls {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 14px 16px;
+      flex-shrink: 0;
+    }
+    .drag-controls-label {
+      font-size: 11px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .drag-control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .drag-control-name {
+      font-size: 12px;
+      color: #666;
+      flex: 1;
+    }
+    .drag-control-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .drag-ctrl-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: #252525;
+      color: #aaa;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.12s;
+      line-height: 1;
+    }
+    .drag-ctrl-btn:hover { background: #333; color: #f0ece6; }
+    .drag-ctrl-val {
+      min-width: 36px;
+      text-align: center;
+      font-size: 13px;
+      color: #e0dcd8;
+      font-weight: 600;
+      background: #1e1e1e;
+      padding: 0 4px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .drag-pos-display {
+      font-size: 11px;
+      color: #555;
+      text-align: center;
+      margin-top: 4px;
+      font-family: monospace;
+    }
+    .drag-reset-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid #3a3a3a;
+      color: #888;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .drag-reset-btn:hover { border-color: #555; color: #bbb; background: rgba(255,255,255,0.03); }
+    /* Zoom controls */
+    .drag-zoom-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .drag-zoom-label { font-size: 12px; color: #555; flex: 1; }
+    .drag-zoom-btn {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      color: #aaa;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.12s;
+    }
+    .drag-zoom-btn:hover { background: #333; color: #f0ece6; }
+    .drag-zoom-val {
+      font-size: 12px;
+      color: #888;
+      min-width: 38px;
+      text-align: center;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page">
+
+    <!-- ── TOP NAV ── -->
+    <div class="topnav">
+      <div class="topnav-left">
+        <a class="back-link" href="formease-dashboard.html">
+          <span class="back-arrow">←</span>
+          <span>Dashboard</span>
+        </a>
+        <span class="divider-dot">·</span>
+        <span class="page-title">Fill physical form</span>
+      </div>
+      <div class="topnav-right">
+        <button class="dots-btn" aria-label="More options">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEPPER ── -->
+    <div class="stepper" id="stepper">
+      <div class="step">
+        <div class="step-num active" id="stepNum1">1</div>
+        <span class="step-label active" id="stepLabel1">Upload form</span>
+      </div>
+      <div class="step-line" id="stepLine1"></div>
+      <div class="step">
+        <div class="step-num inactive" id="stepNum2">2</div>
+        <span class="step-label inactive" id="stepLabel2">Speak details</span>
+      </div>
+      <div class="step-line" id="stepLine2"></div>
+      <div class="step">
+        <div class="step-num inactive" id="stepNum3">3</div>
+        <span class="step-label inactive" id="stepLabel3">Review fields</span>
+      </div>
+      <div class="step-line" id="stepLine3"></div>
+      <div class="step">
+        <div class="step-num inactive" id="stepNum4">4</div>
+        <span class="step-label inactive" id="stepLabel4">Download</span>
+      </div>
+    </div>
+
+    <!-- ── CONTENT ── -->
+    <div class="content">
+
+      <!-- LEFT COLUMN -->
+      <div class="left-col">
+
+        <!-- Step 1 -->
+        <div>
+          <div class="section-heading">Step 1 — Upload your form photo</div>
+          <div class="upload-zone" id="uploadZone">
+            <!-- Upload UI -->
+            <div id="uploadUI">
+              <div class="upload-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                  <rect x="1" y="1" width="20" height="20" rx="4" stroke="#4a4a4a" stroke-width="1.5" />
+                  <line x1="11" y1="6" x2="11" y2="16" stroke="#4a4a4a" stroke-width="1.5" stroke-linecap="round" />
+                  <line x1="6" y1="11" x2="16" y2="11" stroke="#4a4a4a" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="upload-hint">Drop a photo here or</div>
+              <div class="upload-btns">
+                <button class="btn-gallery" id="btnGallery">Upload from gallery</button>
+                <button class="btn-camera" id="btnCamera">Take a photo now</button>
+              </div>
+              <div class="upload-note">JPG, PNG · max 10 MB</div>
+            </div>
+            <!-- Preview UI (hidden) -->
+            <div id="previewUI" class="preview-container" style="display:none">
+              <img id="previewImage" class="preview-img" alt="Form preview" />
+              <canvas id="livePreviewCanvas" class="preview-img" style="display:none"></canvas>
+              <div id="livePreviewLabel"
+                style="display:none;font-size:12px;color:#52c481;text-align:center;margin-top:4px">✓ Live preview —
+                fields filled in real-time</div>
+              <button class="btn-change" id="btnChange">Change image</button>
+            </div>
+          </div>
+          <input type="file" id="fileInput" accept="image/jpeg,image/png" style="display:none" />
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" />
+        </div>
+
+        <!-- Step 2 -->
+        <div>
+          <div class="section-heading">Step 2 — Fill each field</div>
+          <div class="speak-box disabled-section" id="speakBox">
+            <div class="speak-hint" id="speakHint">Upload a form first to detect fields</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span id="fieldProgress" style="font-size:13px;color:#666"></span>
+              <div class="tags-row" id="tagsRow" style="margin-bottom:0"></div>
+            </div>
+            <!-- Current field prompt -->
+            <div id="currentFieldPrompt"
+              style="display:none;background:#1e2e40;border:1px solid rgba(90,140,200,0.3);border-radius:10px;padding:16px 18px;margin-bottom:12px">
+              <div style="font-size:12px;color:#6fa3d8;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">
+                Current Field</div>
+              <div id="currentFieldName" style="font-size:20px;font-weight:600;color:#f0ece6"></div>
+            </div>
+            <div class="speak-btns">
+              <button class="btn-speak" id="btnSpeak" disabled>
+                <span class="mic-icon">🎙</span>
+                <span id="speakBtnText">Tap to speak value</span>
+              </button>
+              <input type="text" id="fieldTypeInput" class="field-input" placeholder="Or type the value here…"
+                style="display:none;width:100%;padding:12px 16px;border-radius:10px;background:#252525;border:1px solid rgba(255,255,255,0.12);color:#e2ddd8;font-size:15px;font-family:'DM Sans',sans-serif" />
+              <button class="btn-type" id="btnType" disabled>Type instead</button>
+            </div>
+            <!-- Transcript display -->
+            <div class="transcript-area" id="transcriptArea">
+              <div class="transcript-label">Heard</div>
+              <div class="transcript-text" id="transcriptText"></div>
+            </div>
+            <!-- Field navigation -->
+            <div id="fieldNav" style="display:none;gap:8px;margin-top:10px">
+              <button id="btnPrevField" class="btn-type" style="flex:1" disabled>← Previous</button>
+              <button id="btnSkipField" class="btn-type" style="flex:1;color:#c59b2a">Skip →</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="right-col">
+
+        <!-- Step 3 -->
+        <div>
+          <div class="section-heading">Step 3 — Review extracted fields</div>
+          <div class="fields-box" id="fieldsBox">
+            <div class="fields-header">
+              <span>Detected form fields</span>
+              <span class="fields-count" id="fieldsCount"></span>
+            </div>
+            <div id="fieldsContainer">
+              <div class="fields-empty" id="fieldsEmpty">Upload a form to detect fields</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div>
+          <div class="section-heading">Step 4 — Download</div>
+          <div class="download-box disabled-section" id="downloadBox">
+            <div class="download-note" id="downloadNote">Available once all fields are filled</div>
+            <div class="download-btns">
+              <button class="btn-download" id="btnDownloadJPG" disabled>Download filled image (JPG)</button>
+              <button class="btn-download" id="btnDownloadPDF" disabled>Download as PDF</button>
+              <button class="btn-whatsapp" id="btnWhatsapp">Share via WhatsApp</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LOADING OVERLAY -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Processing…</div>
+    <div class="loading-subtext" id="loadingSubtext">Gemini AI is analyzing your form</div>
+    <div style="width:260px;height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+      <div id="loadingBar"
+        style="height:100%;width:0%;background:linear-gradient(90deg,#3b6dbf,#6fa3e8);border-radius:4px;transition:width 0.6s ease;">
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- DRAG-ADJUST MODAL -->
+  <div class="drag-modal" id="dragModal">
+    <div class="drag-modal-topbar">
+      <div class="drag-modal-title">
+        Adjust Text Placement
+        <span class="badge">DRAG TO POSITION</span>
+      </div>
+      <div class="drag-modal-hint" id="dragModalHint">Drag any text to the exact position • Use controls on the right to resize</div>
+      <div class="drag-modal-actions">
+        <button class="btn-drag-cancel" id="btnDragCancel">Cancel</button>
+        <button class="btn-drag-confirm" id="btnDragConfirm">⬇ Confirm &amp; Download</button>
+      </div>
+    </div>
+    <div class="drag-modal-body">
+      <!-- Scrollable canvas area -->
+      <div class="drag-canvas-wrap" id="dragCanvasWrap">
+        <div class="drag-canvas-container" id="dragCanvasContainer">
+          <canvas id="dragFormCanvas"></canvas>
+          <!-- Drag labels injected here by JS -->
+        </div>
+      </div>
+      <!-- Right sidebar -->
+      <div class="drag-sidebar">
+        <div class="drag-sidebar-header">Fields</div>
+        <div class="drag-fields-list" id="dragFieldsList"></div>
+        <div class="drag-zoom-bar">
+          <span class="drag-zoom-label">Zoom</span>
+          <button class="drag-zoom-btn" id="btnZoomOut">−</button>
+          <span class="drag-zoom-val" id="dragZoomVal">100%</span>
+          <button class="drag-zoom-btn" id="btnZoomIn">+</button>
+          <button class="drag-zoom-btn" style="font-size:12px;width:auto;padding:0 8px" id="btnZoomFit">Fit</button>
+        </div>
+        <div class="drag-controls" id="dragControls">
+          <div class="drag-controls-label">Selected field</div>
+          <div id="dragControlsContent" style="color:#555;font-size:13px;text-align:center;padding:8px 0">Click a field to select</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═════════════════════════════════════════════════════════
+    //  APP STATE
+    // ═════════════════════════════════════════════════════════
+    const APP = {
+      apiKey: 'AIzaSyDsi5uYztrBAY8MuQWaUjDw5juSzY5XGsg',
+      step: 1,
+      imageBase64: null,   // base64 of the (possibly downscaled) clean form
+      imageMime: null,
+      originalImage: null, // HTMLImageElement of the clean form
+      fields: [],          // [{label, box_2d, type, font_size_px, text_color, writing_start}]
+      values: {},          // {label: value}
+      transcript: '',
+      recognition: null,
+      isRecording: false,
+      currentFieldIndex: 0,
+      placements: {},      // {label: {x, y, maxWidth, fontSize, color}}
+      // Drag-adjust state
+      dragPlacements: {},  // confirmed by user: {label: {x, y, fontSize, color}}
+      dragZoom: 1.0,
+      dragActiveLabel: null,
+      dragDownloadType: 'jpg', // 'jpg' | 'pdf'
+      canvasW: 0,
+      canvasH: 0,
+    };
+
+    // ─────────────────────────────────────────────────────────
+    //  callGemini — calls the API immediately, retries on 429/503
+    //  No artificial pre-throttle. Waits only when Gemini says so.
+    // ─────────────────────────────────────────────────────────
+    async function callGemini(url, body, retries = 4) {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        let res;
+        try {
+          res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+        } catch (networkErr) {
+          if (attempt === retries) throw networkErr;
+          showToast('Network error — retrying…', 'info');
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+
+        // Handle 429 / 503 — only wait when Gemini actually says to
+        if (res.status === 429 || res.status === 503) {
+          const errBody = await res.clone().json().catch(() => ({}));
+          const errMsg = errBody.error?.message || '';
+
+          // Read exact wait time from Gemini's error message or Retry-After header
+          let waitSec = parseInt(res.headers.get('Retry-After') || '0') || Math.pow(2, attempt + 1);
+          const match = errMsg.match(/retry in ([\d\.]+)s/i);
+          if (match) waitSec = Math.ceil(parseFloat(match[1])) + 1;
+
+          if (attempt < retries) {
+            showToast('Gemini busy — retrying in ' + waitSec + 's…', 'info');
+            // Show countdown in the loading subtext
+            for (let s = waitSec; s > 0; s--) {
+              document.getElementById('loadingSubtext').textContent =
+                'Gemini is busy — retrying in ' + s + 's…';
+              await new Promise(r => setTimeout(r, 1000));
+            }
+            continue;
+          } else {
+            throw new Error(errMsg || 'Gemini API rate limited. Please wait a moment and try again.');
+          }
+        }
+
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error?.message || 'Gemini API error ' + res.status);
+        }
+
+        return res;
+      }
+      throw new Error('Gemini API: max retries exceeded.');
+    }
+
+    // Legacy alias kept for detectFields which uses fetchWithRetry
+    async function fetchWithRetry(url, options, retries = 4) {
+      const body = JSON.parse(options.body);
+      return callGemini(url, body, retries);
+
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  INIT
+    // ═════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      // Upload buttons
+      document.getElementById('btnGallery').addEventListener('click', () => {
+        document.getElementById('fileInput').click();
+      });
+      document.getElementById('btnCamera').addEventListener('click', () => {
+        document.getElementById('cameraInput').click();
+      });
+      document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+      document.getElementById('cameraInput').addEventListener('change', handleFileSelect);
+
+      // Drag & drop
+      const zone = document.getElementById('uploadZone');
+      zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        zone.classList.add('drag-active');
+      });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-active'));
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-active');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+      });
+
+      // Change image
+      document.getElementById('btnChange').addEventListener('click', resetUpload);
+
+      // Voice & field-by-field input
+      document.getElementById('btnSpeak').addEventListener('click', toggleVoice);
+      document.getElementById('btnType').addEventListener('click', toggleTypeInput);
+      document.getElementById('fieldTypeInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveTypedFieldValue();
+      });
+      document.getElementById('btnPrevField').addEventListener('click', prevField);
+      document.getElementById('btnSkipField').addEventListener('click', nextField);
+
+      // Downloads
+      document.getElementById('btnDownloadJPG').addEventListener('click', downloadJPG);
+      document.getElementById('btnDownloadPDF').addEventListener('click', downloadPDF);
+      document.getElementById('btnWhatsapp').addEventListener('click', shareWhatsApp);
+
+      // Drag modal confirm / cancel
+      document.getElementById('btnDragCancel').addEventListener('click', closeDragModal);
+      document.getElementById('btnDragConfirm').addEventListener('click', function () {
+        confirmDragAndDownload(APP.dragDownloadType);
+      });
+
+      // Zoom controls
+      document.getElementById('btnZoomIn').addEventListener('click', function () {
+        APP.dragZoom = Math.min(APP.dragZoom + 0.1, 3.0);
+        applyDragZoom();
+      });
+      document.getElementById('btnZoomOut').addEventListener('click', function () {
+        APP.dragZoom = Math.max(APP.dragZoom - 0.1, 0.2);
+        applyDragZoom();
+      });
+      document.getElementById('btnZoomFit').addEventListener('click', function () {
+        var wrap = document.getElementById('dragCanvasWrap');
+        var img = APP.originalImage;
+        if (!img) return;
+        var z = Math.min((wrap.clientWidth - 48) / img.naturalWidth, (wrap.clientHeight - 48) / img.naturalHeight);
+        APP.dragZoom = Math.max(0.2, Math.min(z, 1.5));
+        applyDragZoom();
+      });
+    });
+
+    // ═════════════════════════════════════════════════════════
+    //  STEP 1 — IMAGE UPLOAD
+    // ═════════════════════════════════════════════════════════
+    function handleFileSelect(e) {
+      if (e.target.files && e.target.files.length) handleFile(e.target.files[0]);
+    }
+
+    function handleFile(file) {
+      if (!file.type.match(/^image\/(jpeg|png|jpg)$/i)) {
+        showToast('Please upload a JPG or PNG image', 'error');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('Image must be under 10 MB', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const rawImage = new Image();
+        rawImage.onload = () => {
+          // Downscale to max 1500px to prevent API timeout/payload errors
+          const maxDim = 1500;
+          let w = rawImage.width;
+          let h = rawImage.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+            else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(rawImage, 0, 0, w, h);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+          APP.imageBase64 = dataUrl.split(',')[1];
+          APP.imageMime = 'image/jpeg';
+
+          // Show preview
+          const img = document.getElementById('previewImage');
+          img.src = dataUrl;
+          document.getElementById('uploadUI').style.display = 'none';
+          document.getElementById('previewUI').style.display = 'flex';
+          document.getElementById('uploadZone').classList.add('has-preview');
+
+          // Store downscaled image for system usage
+          APP.originalImage = new Image();
+          APP.originalImage.onload = () => {
+            updateStep(1, 'done');
+            updateStep(2, 'active');
+            detectFields();
+          };
+          APP.originalImage.src = dataUrl;
+        };
+        rawImage.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resetUpload() {
+      APP.imageBase64 = null;
+      APP.imageMime = null;
+      APP.originalImage = null;
+      APP.fields = [];
+      APP.values = {};
+      APP.placements = {};
+      APP.transcript = '';
+      APP.isRecording = false;
+
+      // Reset live preview
+      document.getElementById('livePreviewCanvas').style.display = 'none';
+      document.getElementById('livePreviewLabel').style.display = 'none';
+      document.getElementById('previewImage').style.display = '';
+
+      document.getElementById('uploadUI').style.display = '';
+      document.getElementById('previewUI').style.display = 'none';
+      document.getElementById('uploadZone').classList.remove('has-preview');
+      document.getElementById('fileInput').value = '';
+      document.getElementById('cameraInput').value = '';
+
+      // Reset speak
+      const speakBox = document.getElementById('speakBox');
+      speakBox.classList.add('disabled-section');
+      document.getElementById('speakHint').textContent = 'Upload a form first to detect fields';
+      document.getElementById('tagsRow').innerHTML = '';
+      document.getElementById('btnSpeak').disabled = true;
+      document.getElementById('btnType').disabled = true;
+      document.getElementById('transcriptArea').classList.remove('visible');
+      document.getElementById('fieldTypeInput').value = '';
+      document.getElementById('fieldTypeInput').style.display = 'none';
+      document.getElementById('currentFieldPrompt').style.display = 'none';
+      document.getElementById('fieldNav').style.display = 'none';
+      document.getElementById('fieldProgress').textContent = '';
+
+      const btn = document.getElementById('btnSpeak');
+      btn.classList.remove('recording');
+      document.getElementById('speakBtnText').textContent = 'Tap to speak value';
+      document.getElementById('btnType').textContent = 'Type instead';
+
+      // Reset fields
+      document.getElementById('fieldsContainer').innerHTML =
+        '<div class="fields-empty" id="fieldsEmpty">Upload a form to detect fields</div>';
+      document.getElementById('fieldsCount').textContent = '';
+
+      // Reset download
+      const dlBox = document.getElementById('downloadBox');
+      dlBox.classList.add('disabled-section');
+      document.getElementById('downloadNote').textContent = 'Available once all fields are filled';
+      document.getElementById('btnDownloadJPG').disabled = true;
+      document.getElementById('btnDownloadJPG').classList.remove('enabled');
+      document.getElementById('btnDownloadPDF').disabled = true;
+      document.getElementById('btnDownloadPDF').classList.remove('enabled');
+
+      // Reset stepper
+      for (let i = 1; i <= 4; i++) {
+        updateStep(i, i === 1 ? 'active' : 'inactive');
+      }
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('stepLine' + i).classList.remove('done');
+      }
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  STEP 2 — FIELD DETECTION (Gemini Vision)
+    // ═════════════════════════════════════════════════════════
+    async function detectFields() {
+      showLoading('Analyzing form fields…');
+
+      const imgW = APP.originalImage.naturalWidth;
+      const imgH = APP.originalImage.naturalHeight;
+
+      const prompt = `You are a precise form-field detector. Analyze this physical form image (${imgW}x${imgH} pixels).
+
+TASK: Find every fillable field (text lines, checkboxes, date boxes, etc.)
+
+For EACH field, visually analyze:
+1. Where the BLANK WRITING AREA is (the line or box where a person would write — NOT the label)
+2. The font size used by nearby printed text on the form (to match handwriting size)
+
+Return a JSON array. Each object MUST have:
+- "label": field label as printed on the form (e.g. "Name", "Date of Birth")
+- "box_2d": bounding box of the FILLABLE AREA as [ymin, xmin, ymax, xmax] with values normalized 0-1000 relative to image dimensions. Be VERY precise — the box should tightly wrap the blank line/box where text goes.
+- "type": "text" | "checkbox" | "date" | "signature"
+- "font_size_px": estimated font size in pixels. Look at the pre-printed text size on the form and match the font_size value to that exact size. Do not guess. Measure it relative to the form's own typography.
+- "text_color": hex color that matches the form's printed text (e.g. "#000000" for black ink, "#1a1a6c" for dark blue)
+- "writing_start": [y, x] normalized 0-1000 — x must be the position where the blank underline starts, which is after the colon and label text, not at the start of the line. Look at where the label ends and the blank space begins and return that pixel position as x.
+- "underline_y": [integer 0-1000] underline_y is the pixel row of the underline itself, separate from the y value which is the top of the empty space.
+
+CRITICAL RULES:
+- box_2d must be the BLANK AREA, never the label text
+- underline_y is the pixel row of the underline itself.
+- For checkbox fields like Gender with Male Female Other options, it must return three completely separate entries, one for each checkbox square, named Gender_Male, Gender_Female, and Gender_Other. Each one should have the coordinates of just that small checkbox square, not the entire row. Never return a single entry for the whole Gender row because that causes text to be written over the printed label words.
+- Return ONLY raw JSON array. No markdown, no code blocks, no explanation.
+
+Example: [{"label":"Full Name","box_2d":[150,250,185,850],"type":"text","font_size_px":18,"text_color":"#000000","writing_start":[170,255],"underline_y":185}]`;
+
+      try {
+        const response = await fetchWithRetry(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${APP.apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  {
+                    inline_data: {
+                      mime_type: APP.imageMime,
+                      data: APP.imageBase64
+                    }
+                  }
+                ]
+              }],
+              generationConfig: {
+                temperature: 0,
+                responseMimeType: 'application/json'
+              }
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error?.message || `API error ${response.status}`);
+        }
+
+        const data = await response.json();
+        // Skip thinking tokens — find the first real text part
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        let text = (parts.find(p => p.text && !p.thought) || {}).text || '';
+
+        // Strip markdown fences if present
+        let jsonStr = text.trim();
+        if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+        }
+
+        APP.fields = JSON.parse(jsonStr);
+
+        if (!Array.isArray(APP.fields) || APP.fields.length === 0) {
+          throw new Error('No form fields detected in this image. Please try a clearer photo.');
+        }
+
+        // Initialize values
+        APP.values = {};
+        APP.fields.forEach(f => { APP.values[f.label] = null; });
+
+        // Render UI
+        renderFields();
+        renderTags();
+
+        // Enable speak section — field-by-field mode
+        const speakBox = document.getElementById('speakBox');
+        speakBox.classList.remove('disabled-section');
+        APP.currentFieldIndex = 0;
+        showCurrentField();
+        document.getElementById('btnSpeak').disabled = false;
+        document.getElementById('btnType').disabled = false;
+
+        hideLoading();
+        showToast(`Detected ${APP.fields.length} form fields`, 'success');
+
+      } catch (err) {
+        hideLoading();
+        showToast('Field detection failed: ' + err.message, 'error');
+        console.error('detectFields error:', err);
+      }
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  STEP 2b — FIELD-BY-FIELD INPUT
+    // ═════════════════════════════════════════════════════════
+    function showCurrentField() {
+      const idx = APP.currentFieldIndex;
+      if (!APP.fields.length) return;
+      const field = APP.fields[idx];
+      document.getElementById('currentFieldPrompt').style.display = 'block';
+      document.getElementById('currentFieldName').textContent = field.label;
+      document.getElementById('fieldProgress').textContent = 'Field ' + (idx + 1) + ' of ' + APP.fields.length;
+      document.getElementById('speakHint').textContent = 'Speak or type the value for "' + field.label + '"';
+      document.getElementById('fieldNav').style.display = 'flex';
+      document.getElementById('btnPrevField').disabled = (idx === 0);
+      document.getElementById('transcriptArea').classList.remove('visible');
+      var typeInput = document.getElementById('fieldTypeInput');
+      typeInput.value = APP.values[field.label] || '';
+      document.getElementById('speakBtnText').textContent = 'Tap to speak value';
+      renderTags();
+      renderFields();
+    }
+
+    function nextField() {
+      if (APP.currentFieldIndex < APP.fields.length - 1) {
+        APP.currentFieldIndex++;
+        showCurrentField();
+      } else {
+        document.getElementById('speakHint').textContent = 'All fields complete! Review on the right.';
+        document.getElementById('currentFieldPrompt').style.display = 'none';
+        document.getElementById('fieldNav').style.display = 'none';
+        updateStep(2, 'done');
+        updateStep(3, 'active');
+        document.getElementById('stepLine2').classList.add('done');
+        checkAllFilled();
+        showToast('All fields done!', 'success');
+      }
+    }
+
+    function prevField() {
+      if (APP.currentFieldIndex > 0) {
+        APP.currentFieldIndex--;
+        showCurrentField();
+      }
+    }
+
+    function saveFieldValue(value) {
+      var field = APP.fields[APP.currentFieldIndex];
+      if (value && value.trim()) {
+        APP.values[field.label] = value.trim();
+        renderFields();
+        renderTags();
+        checkAllFilled();
+        showToast('"' + field.label + '" saved ✓', 'success');
+        // Fast live preview using fallback positions (no API call during input)
+        quickLivePreview();
+        setTimeout(function () { nextField(); }, 350);
+      }
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  LIVE PREVIEW — quick estimate (no Gemini, uses field box_2d)
+    // ═════════════════════════════════════════════════════════
+    function quickLivePreview() {
+      var img = APP.originalImage;
+      if (!img) return;
+
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      APP.canvasW = canvas.width;
+      APP.canvasH = canvas.height;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      APP.fields.forEach(function (field) {
+        var value = APP.values[field.label];
+        if (!value || field.type === 'checkbox' || field.type === 'signature') return;
+
+        // Use Gemini-refned placements if available, else estimate from box_2d
+        var p = APP.placements[field.label];
+        var fontSize, textX, textY, maxW, color;
+
+        if (p) {
+          fontSize = p.fontSize; textX = p.x; textY = p.underline_y - 3; maxW = p.maxWidth; color = p.color;
+        } else {
+          var box = field.box_2d;
+          var bx = (box[1] / 1000) * canvas.width;
+          var by = (box[0] / 1000) * canvas.height;
+          var bw = ((box[3] - box[1]) / 1000) * canvas.width;
+          var bh = ((box[2] - box[0]) / 1000) * canvas.height;
+          fontSize = field.font_size_px ?
+            Math.round(field.font_size_px * (canvas.height / 1000)) :
+            Math.max(10, Math.floor(bh * 0.65));
+          fontSize = Math.max(8, Math.min(fontSize, Math.floor(bh * 0.85)));
+          color = field.text_color || '#111111';
+
+          if (field.writing_start) {
+            textX = (field.writing_start[1] / 1000) * canvas.width;
+          } else {
+            textX = bx + 3;
+          }
+
+          var underline_y;
+          if (field.underline_y) {
+            underline_y = (field.underline_y / 1000) * canvas.height;
+          } else {
+            underline_y = by + bh;
+          }
+
+          textY = underline_y - 3;
+          maxW = (bx + bw) - textX - 4;
+        }
+
+        ctx.font = '500 ' + fontSize + 'px "Open Sans", sans-serif';
+        ctx.fillStyle = color;
+        ctx.textBaseline = 'alphabetic';
+
+        var widthLimit = maxW - 4;
+        var w = ctx.measureText(value).width;
+        while (w > widthLimit && fontSize > 6) {
+          fontSize--;
+          ctx.font = '500 ' + fontSize + 'px "Open Sans", sans-serif';
+          w = ctx.measureText(value).width;
+        }
+        ctx.fillText(value, textX, textY, widthLimit);
+      });
+
+      var liveCanvas = document.getElementById('livePreviewCanvas');
+      var lctx = liveCanvas.getContext('2d');
+      liveCanvas.width = canvas.width;
+      liveCanvas.height = canvas.height;
+      lctx.drawImage(canvas, 0, 0);
+
+      document.getElementById('previewImage').style.display = 'none';
+      liveCanvas.style.display = 'block';
+      var lbl = document.getElementById('livePreviewLabel');
+      lbl.style.display = 'block';
+      lbl.textContent = '⚡ Live preview — drag labels on download for precision';
+    }
+
+    function toggleTypeInput() {
+      var input = document.getElementById('fieldTypeInput');
+      if (input.style.display === 'none' || !input.style.display) {
+        input.style.display = 'block';
+        input.focus();
+        document.getElementById('btnType').textContent = 'Use voice instead';
+      } else {
+        input.style.display = 'none';
+        document.getElementById('btnType').textContent = 'Type instead';
+      }
+    }
+
+    function saveTypedFieldValue() {
+      var input = document.getElementById('fieldTypeInput');
+      saveFieldValue(input.value);
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  VOICE INPUT — per field (no continuous, captures one value)
+    // ═════════════════════════════════════════════════════════
+    function toggleVoice() {
+      if (APP.isRecording) { stopVoice(); } else { startVoice(); }
+    }
+
+    function startVoice() {
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { showToast('Voice not supported. Please type instead.', 'error'); return; }
+      APP.recognition = new SR();
+      APP.recognition.continuous = false;
+      APP.recognition.interimResults = true;
+      APP.recognition.lang = 'en-IN';
+      APP.transcript = '';
+
+      APP.recognition.onresult = function (event) {
+        var final = '', interim = '';
+        for (var i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) { final += event.results[i][0].transcript; }
+          else { interim += event.results[i][0].transcript; }
+        }
+        APP.transcript = final || interim;
+        document.getElementById('transcriptText').textContent = APP.transcript + (final ? '' : '...');
+      };
+
+      APP.recognition.onerror = function (e) {
+        if (e.error === 'not-allowed') { showToast('Microphone access denied.', 'error'); }
+        else if (e.error !== 'no-speech' && e.error !== 'aborted') { showToast('Mic error: ' + e.error, 'error'); }
+        stopVoiceUI();
+      };
+
+      APP.recognition.onend = function () {
+        stopVoiceUI();
+        if (APP.transcript.trim()) { saveFieldValue(APP.transcript); }
+      };
+
+      try {
+        APP.recognition.start();
+        APP.isRecording = true;
+        document.getElementById('btnSpeak').classList.add('recording');
+        document.getElementById('speakBtnText').textContent = 'Stop and save';
+        document.getElementById('transcriptArea').classList.add('visible');
+        document.getElementById('transcriptText').textContent = 'Listening...';
+      } catch (err) { showToast('Could not start mic: ' + err.message, 'error'); }
+    }
+
+    function stopVoice() {
+      APP.isRecording = false;
+      if (APP.recognition) { try { APP.recognition.stop(); } catch (e) { } }
+    }
+
+    function stopVoiceUI() {
+      APP.isRecording = false;
+      document.getElementById('btnSpeak').classList.remove('recording');
+      document.getElementById('speakBtnText').textContent = 'Tap to speak value';
+    }
+
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  CANVAS RENDERING — draws all field values using computed placements
+    // ═══════════════════════════════════════════════════════════════════════
+    function buildFilledCanvas() {
+      var img = APP.originalImage;
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      APP.fields.forEach(function (field) {
+        var value = APP.values[field.label];
+        if (!value || field.type === 'signature') return;
+
+        if (field.type === 'checkbox') {
+          var box = field.box_2d;
+          var bx = Math.round((box[1] / 1000) * canvas.width);
+          var by = Math.round((box[0] / 1000) * canvas.height);
+          var bw = Math.round(((box[3] - box[1]) / 1000) * canvas.width);
+          var bh = Math.round(((box[2] - box[0]) / 1000) * canvas.height);
+
+          ctx.strokeStyle = field.text_color || '#1e6e3e';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          var pad = 3;
+          ctx.moveTo(bx + pad, by + pad);
+          ctx.lineTo(bx + bw - pad, by + bh - pad);
+          ctx.moveTo(bx + bw - pad, by + pad);
+          ctx.lineTo(bx + pad, by + bh - pad);
+          ctx.stroke();
+          return;
+        }
+
+        var p = APP.placements[field.label];
+        var fontSize, textX, textY, maxW, color;
+
+        if (p) {
+          fontSize = p.fontSize; textX = p.x;
+          textY = p.underline_y - 3;
+          maxW = p.maxWidth; color = p.color;
+        } else {
+          var box = field.box_2d;
+          var bx = (box[1] / 1000) * canvas.width;
+          var by = (box[0] / 1000) * canvas.height;
+          var bw = ((box[3] - box[1]) / 1000) * canvas.width;
+          var bh = ((box[2] - box[0]) / 1000) * canvas.height;
+
+          fontSize = field.font_size_px ?
+            Math.round(field.font_size_px * (canvas.height / 1000)) :
+            Math.max(10, Math.floor(bh * 0.65));
+          fontSize = Math.max(8, Math.min(fontSize, Math.floor(bh * 0.85)));
+
+          color = field.text_color || '#111111';
+
+          if (field.writing_start) {
+            textX = (field.writing_start[1] / 1000) * canvas.width;
+          } else {
+            textX = bx + 3;
+          }
+
+          var underline_y;
+          if (field.underline_y) {
+            underline_y = (field.underline_y / 1000) * canvas.height;
+          } else {
+            underline_y = by + bh;
+          }
+
+          textY = underline_y - 3;
+          maxW = (bx + bw) - textX - 4;
+        }
+
+        ctx.font = '500 ' + fontSize + 'px "Open Sans", sans-serif';
+        ctx.fillStyle = color;
+        ctx.textBaseline = 'alphabetic';
+
+        var widthLimit = maxW - 4;
+        var w = ctx.measureText(value).width;
+        while (w > widthLimit && fontSize > 6) {
+          fontSize--;
+          ctx.font = '500 ' + fontSize + 'px "Open Sans", sans-serif';
+          w = ctx.measureText(value).width;
+        }
+
+        ctx.fillText(value, textX, textY, widthLimit);
+      });
+
+      return canvas;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  GEMINI PIPELINE — 3-step precision placement + verification loop
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * STEP A — "Master Placer"
+     * Send the CLEAN form image (no text drawn yet) + all field values to Gemini.
+     * Ask it to return the exact pixel coordinates (x, y in canvas pixels) where
+     * each value must be drawn, the font size, max width and color.
+     */
+    async function geminiComputePlacements() {
+      var img = APP.originalImage;
+      var cW = img.naturalWidth;
+      var cH = img.naturalHeight;
+
+      // Build the fields + values table for the prompt
+      var fieldTable = APP.fields
+        .filter(f => APP.values[f.label] && f.type !== 'checkbox' && f.type !== 'signature')
+        .map(function (f) {
+          var box = f.box_2d; // [ymin, xmin, ymax, xmax] normalised 0-1000
+          // Convert to actual canvas pixels for Gemini context
+          var bxPx = Math.round((box[1] / 1000) * cW);
+          var byPx = Math.round((box[0] / 1000) * cH);
+          var bwPx = Math.round(((box[3] - box[1]) / 1000) * cW);
+          var bhPx = Math.round(((box[2] - box[0]) / 1000) * cH);
+          var wsPx = f.writing_start
+            ? [Math.round((f.writing_start[0] / 1000) * cH), Math.round((f.writing_start[1] / 1000) * cW)]
+            : null;
+          return {
+            label: f.label,
+            value: APP.values[f.label],
+            field_box_px: [bxPx, byPx, bxPx + bwPx, byPx + bhPx],
+            writing_start_px: wsPx,
+            hint_font_px: f.font_size_px || null,
+            hint_color: f.text_color || null
+          };
+        });
+
+      if (fieldTable.length === 0) return; // nothing to place
+
+      var prompt =
+        'You are a pixel-perfect form filling engine. The image is a scanned physical form with dimensions ' + cW + 'x' + cH + ' pixels.\n\n' +
+        'I will fill in the following fields by drawing text onto the image using a Canvas 2D context.\n' +
+        'For EACH field below, determine the EXACT pixel coordinates for x and underline_y.\n\n' +
+        'Rules:\n' +
+        '- The text must sit INSIDE the blank writing area described by field_box_px ([x1,y1,x2,y2]).\n' +
+        '- x must be the position where the blank underline starts, which is after the colon and label text, not at the start of the line. Look at where the label ends and the blank space begins and return that pixel position as x.\n' +
+        '- underline_y is the pixel row where the underline itself sits.\n' +
+        '- Pick a font_size_px so the text fits comfortably in the field height. Visual match to text around it.\n' +
+        '- max_width_px = distance from text_x to the right edge of the field box minus 4px padding.\n' +
+        '- color_hex: use hint_color if provided and it looks correct; default to "#000000".\n\n' +
+        'Return a JSON array — ONE object per field with EXACTLY these keys:\n' +
+        '[{\n' +
+        '  "label": "<exact field label>",\n' +
+        '  "text_x": <integer canvas x in pixels>,\n' +
+        '  "underline_y": <integer canvas y row of the underline>,\n' +
+        '  "font_size_px": <integer>,\n' +
+        '  "max_width_px": <integer>,\n' +
+        '  "color_hex": "<#rrggbb>"\n' +
+        '}]\n\n' +
+        'Field data:\n' + JSON.stringify(fieldTable, null, 2) + '\n\n' +
+        'IMPORTANT: Return ONLY a raw JSON array. No markdown fences, no explanation, no extra keys.';
+
+      try {
+        var res = await callGemini(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' + APP.apiKey,
+          {
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: APP.imageMime, data: APP.imageBase64 } }
+              ]
+            }],
+            generationConfig: { temperature: 0, responseMimeType: 'application/json' }
+          }
+        );
+
+        var data = await res.json();
+
+        // Skip any "thought" parts (gemini-2.5 thinking models) — find the real text part
+        var parts = data.candidates?.[0]?.content?.parts || [];
+        var rawTxt = (parts.find(p => p.text && !p.thought) || {}).text || '[]';
+
+        var parsed;
+        try {
+          parsed = JSON.parse(rawTxt.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, ''));
+        } catch (e) {
+          console.warn('geminiComputePlacements: JSON parse failed, using box_2d fallback.', e);
+          parsed = [];
+        }
+        if (!Array.isArray(parsed)) parsed = [parsed];
+
+        parsed.forEach(function (item) {
+          if (!item.label) return;
+          APP.placements[item.label] = {
+            x: item.text_x,
+            underline_y: item.underline_y,
+            maxWidth: item.max_width_px,
+            fontSize: item.font_size_px,
+            color: item.color_hex || '#000000'
+          };
+        });
+
+        console.log('Placements computed:', Object.keys(APP.placements).length, 'fields');
+      } catch (err) {
+        console.warn('geminiComputePlacements failed — falling back to box_2d positions:', err.message);
+        // Do NOT rethrow — buildFilledCanvas will use box_2d fallback
+      }
+    }
+
+    /**
+     * MASTER PIPELINE — single API call:
+     *  1. Ask Gemini for exact pixel placements (1 API call)
+     *  2. Draw text onto canvas (pure canvas, no API call)
+     *  No cross-checking / QA verification passes.
+     */
+    async function runGeminiPipeline() {
+      await document.fonts.ready;
+
+      // Reset placements so previous run doesn't bleed in
+      APP.placements = {};
+
+      // ── Step 1: Ask Gemini for exact pixel placements (only API call)
+      // Errors are caught inside geminiComputePlacements — falls back to box_2d silently.
+      showLoading('Computing pixel placements…', 'Gemini is locating exact positions for each field');
+      document.getElementById('loadingBar').style.width = '40%';
+      await geminiComputePlacements();
+
+      // ── Step 2: Draw text on canvas (pure canvas — no API call)
+      showLoading('Drawing text on form…', 'Rendering field values onto the image');
+      document.getElementById('loadingBar').style.width = '80%';
+      var canvas = buildFilledCanvas();
+
+      // ── Update live preview with the final result
+      var liveCanvas = document.getElementById('livePreviewCanvas');
+      var lctx = liveCanvas.getContext('2d');
+      liveCanvas.width = canvas.width;
+      liveCanvas.height = canvas.height;
+      lctx.drawImage(canvas, 0, 0);
+      document.getElementById('previewImage').style.display = 'none';
+      liveCanvas.style.display = 'block';
+      document.getElementById('livePreviewLabel').style.display = 'block';
+      document.getElementById('livePreviewLabel').textContent = '✓ Filled form ready';
+
+      return canvas;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  DRAG-ADJUST MODAL — pixel-perfect user drag & confirm before download
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * openDragModal(downloadType)
+     *
+     * 1. Runs Gemini placement pipeline to get initial x/y estimates
+     * 2. Opens the full-screen drag modal
+     * 3. Draws the clean form on the modal canvas
+     * 4. Creates draggable <div> labels for every filled field
+     * 5. User drags labels to exact positions; sidebar shows controls
+     * 6. On "Confirm", reads final positions → buildFilledCanvas() → download
+     */
+    function openDragModal(downloadType) {
+      APP.dragDownloadType = downloadType;
+
+      // Build dragPlacements directly from box_2d field data — no API call needed.
+      // The user will drag labels to exact positions in the modal.
+      APP.dragPlacements = {};
+      var img = APP.originalImage;
+      var iW = img.naturalWidth;
+      var iH = img.naturalHeight;
+
+      APP.fields.forEach(function (field) {
+        if (!APP.values[field.label] || field.type === 'signature') return;
+        if (field.type === 'checkbox') return; // checkboxes drawn directly on canvas
+
+        var box = field.box_2d;
+        var bx = (box[1] / 1000) * iW;
+        var by = (box[0] / 1000) * iH;
+        var bw = ((box[3] - box[1]) / 1000) * iW;
+        var bh = ((box[2] - box[0]) / 1000) * iH;
+        var fs = field.font_size_px ?
+          Math.round(field.font_size_px * (iH / 1000)) :
+          Math.max(10, Math.floor(bh * 0.65));
+        fs = Math.max(8, Math.min(fs, Math.floor(bh * 0.85)));
+        var tx = field.writing_start ? (field.writing_start[1] / 1000) * iW : bx + 3;
+        var uy = field.underline_y ? (field.underline_y / 1000) * iH : by + bh;
+        APP.dragPlacements[field.label] = {
+          x: tx, y: uy - 3,
+          fontSize: fs,
+          color: field.text_color || '#000000'
+        };
+      });
+
+      // 3. Set up canvas
+      var modal = document.getElementById('dragModal');
+      var canvasEl = document.getElementById('dragFormCanvas');
+      var container = document.getElementById('dragCanvasContainer');
+
+      // Temporarily make modal visible (but invisible) so clientWidth is readable
+      modal.style.visibility = 'hidden';
+      modal.style.display = 'flex';
+
+      // Compute display scale: fit the image inside the available area
+      var wrap = document.getElementById('dragCanvasWrap');
+      var availW = Math.max(wrap.clientWidth - 48, 200);
+      var availH = Math.max(wrap.clientHeight - 48, 200);
+      var scaleW = availW / iW;
+      var scaleH = availH / iH;
+      APP.dragZoom = Math.min(scaleW, scaleH, 1.5); // don't zoom > 150% initially
+      APP.dragZoom = Math.max(APP.dragZoom, 0.2);
+
+      // Draw clean form image on canvas at natural size (labels are scaled via CSS)
+      canvasEl.width = iW;
+      canvasEl.height = iH;
+      var ctx = canvasEl.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      // Also draw checkbox marks on the canvas (they are not draggable)
+      APP.fields.forEach(function (field) {
+        if (field.type !== 'checkbox') return;
+        var val = APP.values[field.label];
+        if (!val) return;
+        var box = field.box_2d;
+        var bx = Math.round((box[1] / 1000) * iW);
+        var by = Math.round((box[0] / 1000) * iH);
+        var bw = Math.round(((box[3] - box[1]) / 1000) * iW);
+        var bh = Math.round(((box[2] - box[0]) / 1000) * iH);
+        ctx.strokeStyle = field.text_color || '#1e6e3e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        var pad = 3;
+        ctx.moveTo(bx + pad, by + pad); ctx.lineTo(bx + bw - pad, by + bh - pad);
+        ctx.moveTo(bx + bw - pad, by + pad); ctx.lineTo(bx + pad, by + bh - pad);
+        ctx.stroke();
+      });
+
+      // Apply zoom via CSS transform
+      applyDragZoom();
+
+      // 4. Remove old drag labels
+      container.querySelectorAll('.drag-label').forEach(function (el) { el.remove(); });
+
+      // 5. Create draggable labels for each filled text field
+      Object.keys(APP.dragPlacements).forEach(function (label) {
+        createDragLabel(label, container, iW, iH);
+      });
+
+      // 6. Populate sidebar field list
+      renderDragSidebar();
+
+      // Update zoom display
+      document.getElementById('dragZoomVal').textContent = Math.round(APP.dragZoom * 100) + '%';
+
+      // Update confirm button label & style based on download type
+      var confirmBtn = document.getElementById('btnDragConfirm');
+      if (downloadType === 'jpg') {
+        confirmBtn.textContent = '\u2b07 Confirm & Download JPG';
+        confirmBtn.style.background = '#1e6e3e';
+        confirmBtn.style.color = '#52c481';
+      } else if (downloadType === 'pdf') {
+        confirmBtn.textContent = '\u2b07 Confirm & Download PDF';
+        confirmBtn.style.background = '#1a3a6e';
+        confirmBtn.style.color = '#6fa3e8';
+      } else if (downloadType === 'whatsapp') {
+        confirmBtn.textContent = '\u2b07 Confirm & Share on WhatsApp';
+        confirmBtn.style.background = '#1a3a1e';
+        confirmBtn.style.color = '#52c481';
+      }
+
+      // Show modal: clear the temp visibility overrides, then use CSS class
+      modal.style.visibility = '';
+      modal.style.display = '';
+      modal.classList.add('visible');
+      APP.dragActiveLabel = null;
+    }
+
+    function applyDragZoom() {
+      var canvasEl = document.getElementById('dragFormCanvas');
+      var container = document.getElementById('dragCanvasContainer');
+      var z = APP.dragZoom;
+      // Scale the entire container (canvas + label divs) via CSS
+      container.style.width = (canvasEl.width * z) + 'px';
+      container.style.height = (canvasEl.height * z) + 'px';
+      canvasEl.style.width = (canvasEl.width * z) + 'px';
+      canvasEl.style.height = (canvasEl.height * z) + 'px';
+      // Re-position all labels
+      container.querySelectorAll('.drag-label').forEach(function (el) {
+        var lbl = el.dataset.label;
+        var dp = APP.dragPlacements[lbl];
+        if (!dp) return;
+        el.style.left = Math.round(dp.x * z) + 'px';
+        el.style.top = Math.round(dp.y * z) + 'px';
+        // Update font size of inner text span
+        var span = el.querySelector('.drag-label-text');
+        if (span) span.style.fontSize = Math.round(dp.fontSize * z) + 'px';
+      });
+      document.getElementById('dragZoomVal').textContent = Math.round(z * 100) + '%';
+    }
+
+    function createDragLabel(label, container, imgW, imgH) {
+      var dp = APP.dragPlacements[label];
+      var value = APP.values[label];
+      if (!dp || !value) return;
+
+      var el = document.createElement('div');
+      el.className = 'drag-label';
+      el.dataset.label = label;
+
+      var inner = document.createElement('div');
+      inner.className = 'drag-label-inner';
+
+      var textSpan = document.createElement('span');
+      textSpan.className = 'drag-label-text';
+      textSpan.textContent = value;
+      textSpan.style.fontSize = Math.round(dp.fontSize * APP.dragZoom) + 'px';
+      textSpan.style.color = dp.color;
+      // Thin outline for visibility against form background
+      textSpan.style.textShadow = '0 0 3px rgba(255,255,255,0.8), 0 0 3px rgba(255,255,255,0.8)';
+
+      var handle = document.createElement('span');
+      handle.className = 'drag-label-handle';
+      handle.title = 'Drag to reposition';
+
+      inner.appendChild(textSpan);
+      inner.appendChild(handle);
+      el.appendChild(inner);
+
+      // Position: canvas pixels × zoom
+      el.style.position = 'absolute';
+      el.style.left = Math.round(dp.x * APP.dragZoom) + 'px';
+      el.style.top = Math.round(dp.y * APP.dragZoom) + 'px';
+      // Anchor at baseline left (text renders from this point)
+      el.style.transformOrigin = 'left bottom';
+
+      // Click to select
+      el.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        setActiveDragLabel(label);
+        startDrag(e, el, label, imgW, imgH);
+      });
+      el.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        setActiveDragLabel(label);
+        startDragTouch(e, el, label, imgW, imgH);
+      }, { passive: false });
+
+      container.appendChild(el);
+    }
+
+    function setActiveDragLabel(label) {
+      APP.dragActiveLabel = label;
+      // Update visual state
+      document.querySelectorAll('.drag-label').forEach(function (el) {
+        el.classList.toggle('active-label', el.dataset.label === label);
+      });
+      // Update sidebar
+      document.querySelectorAll('.drag-field-item').forEach(function (el) {
+        el.classList.toggle('active', el.dataset.label === label);
+      });
+      // Scroll sidebar item into view
+      var sideItem = document.querySelector('.drag-field-item[data-label="' + CSS.escape(label) + '"]');
+      if (sideItem) sideItem.scrollIntoView({ block: 'nearest' });
+      // Update controls panel
+      renderDragControls(label);
+    }
+
+    function startDrag(e, el, label, imgW, imgH) {
+      var z = APP.dragZoom;
+      var startX = e.clientX;
+      var startY = e.clientY;
+      var startLeft = APP.dragPlacements[label].x * z;
+      var startTop  = APP.dragPlacements[label].y * z;
+
+      el.classList.add('dragging');
+
+      function onMove(ev) {
+        var dx = ev.clientX - startX;
+        var dy = ev.clientY - startY;
+        var newLeft = Math.max(0, Math.min(startLeft + dx, imgW * z - 4));
+        var newTop  = Math.max(0, Math.min(startTop  + dy, imgH * z - 4));
+        el.style.left = Math.round(newLeft) + 'px';
+        el.style.top  = Math.round(newTop)  + 'px';
+        // Store in natural canvas coords
+        APP.dragPlacements[label].x = newLeft / z;
+        APP.dragPlacements[label].y = newTop  / z;
+        updateDragPosDisplay(label);
+      }
+      function onUp() {
+        el.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        renderDragControls(label);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    }
+
+    function startDragTouch(e, el, label, imgW, imgH) {
+      var z = APP.dragZoom;
+      var touch = e.touches[0];
+      var startX = touch.clientX;
+      var startY = touch.clientY;
+      var startLeft = APP.dragPlacements[label].x * z;
+      var startTop  = APP.dragPlacements[label].y * z;
+
+      el.classList.add('dragging');
+
+      function onMove(ev) {
+        var t = ev.touches[0];
+        var dx = t.clientX - startX;
+        var dy = t.clientY - startY;
+        var newLeft = Math.max(0, Math.min(startLeft + dx, imgW * z - 4));
+        var newTop  = Math.max(0, Math.min(startTop  + dy, imgH * z - 4));
+        el.style.left = Math.round(newLeft) + 'px';
+        el.style.top  = Math.round(newTop)  + 'px';
+        APP.dragPlacements[label].x = newLeft / z;
+        APP.dragPlacements[label].y = newTop  / z;
+        updateDragPosDisplay(label);
+      }
+      function onEnd() {
+        el.classList.remove('dragging');
+        el.removeEventListener('touchmove', onMove);
+        el.removeEventListener('touchend', onEnd);
+        renderDragControls(label);
+      }
+      el.addEventListener('touchmove', onMove, { passive: false });
+      el.addEventListener('touchend', onEnd);
+    }
+
+    function updateDragPosDisplay(label) {
+      var dp = APP.dragPlacements[label];
+      if (!dp) return;
+      var el = document.getElementById('dragPosDisplay');
+      if (el) el.textContent = 'x:' + Math.round(dp.x) + '  y:' + Math.round(dp.y);
+    }
+
+    function renderDragSidebar() {
+      var list = document.getElementById('dragFieldsList');
+      list.innerHTML = '';
+      Object.keys(APP.dragPlacements).forEach(function (label) {
+        var item = document.createElement('div');
+        item.className = 'drag-field-item';
+        item.dataset.label = label;
+
+        var lbl = document.createElement('div');
+        lbl.className = 'drag-field-item-label';
+        lbl.textContent = label;
+
+        var val = document.createElement('div');
+        val.className = 'drag-field-item-value';
+        val.textContent = APP.values[label] || '';
+
+        item.appendChild(lbl);
+        item.appendChild(val);
+        item.addEventListener('click', function () {
+          setActiveDragLabel(label);
+          // Scroll the canvas label into view
+          var dragEl = document.querySelector('.drag-label[data-label="' + CSS.escape(label) + '"]');
+          if (dragEl) dragEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+        list.appendChild(item);
+      });
+    }
+
+    function renderDragControls(label) {
+      var dp = APP.dragPlacements[label];
+      if (!dp) {
+        document.getElementById('dragControlsContent').innerHTML = '<span style="color:#555;font-size:13px">Click a field to select</span>';
+        return;
+      }
+      var html =
+        '<div class="drag-control-row">' +
+          '<span class="drag-control-name">Font size</span>' +
+          '<div class="drag-control-stepper">' +
+            '<button class="drag-ctrl-btn" id="btnFontDec">−</button>' +
+            '<span class="drag-ctrl-val" id="dragFontVal">' + Math.round(dp.fontSize) + 'px</span>' +
+            '<button class="drag-ctrl-btn" id="btnFontInc">+</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="drag-pos-display" id="dragPosDisplay">x:' + Math.round(dp.x) + '  y:' + Math.round(dp.y) + '</div>' +
+        '<button class="drag-reset-btn" id="btnResetPlacement">↺ Reset to original estimate</button>';
+
+      document.getElementById('dragControlsContent').innerHTML = html;
+
+      // Wire font size buttons
+      document.getElementById('btnFontDec').addEventListener('click', function () {
+        changeFontSize(label, -1);
+      });
+      document.getElementById('btnFontInc').addEventListener('click', function () {
+        changeFontSize(label, 1);
+      });
+      document.getElementById('btnResetPlacement').addEventListener('click', function () {
+        resetSinglePlacement(label);
+      });
+    }
+
+    function changeFontSize(label, delta) {
+      var dp = APP.dragPlacements[label];
+      if (!dp) return;
+      dp.fontSize = Math.max(6, Math.min(dp.fontSize + delta, 120));
+      // Update the visual label
+      var textSpan = document.querySelector('.drag-label[data-label="' + CSS.escape(label) + '"] .drag-label-text');
+      if (textSpan) textSpan.style.fontSize = Math.round(dp.fontSize * APP.dragZoom) + 'px';
+      // Update display
+      var fv = document.getElementById('dragFontVal');
+      if (fv) fv.textContent = Math.round(dp.fontSize) + 'px';
+    }
+
+    function resetSinglePlacement(label) {
+      // Re-compute from Gemini or box_2d fallback
+      var img = APP.originalImage;
+      var iW = img.naturalWidth, iH = img.naturalHeight;
+      var field = APP.fields.find(function (f) { return f.label === label; });
+      if (!field) return;
+      var p = APP.placements[label];
+      var dp;
+      if (p) {
+        dp = { x: p.x, y: p.underline_y - 3, fontSize: p.fontSize, color: p.color || '#000000' };
+      } else {
+        var box = field.box_2d;
+        var bx = (box[1] / 1000) * iW;
+        var by = (box[0] / 1000) * iH;
+        var bw = ((box[3] - box[1]) / 1000) * iW;
+        var bh = ((box[2] - box[0]) / 1000) * iH;
+        var fs = field.font_size_px ?
+          Math.round(field.font_size_px * (iH / 1000)) : Math.max(10, Math.floor(bh * 0.65));
+        fs = Math.max(8, Math.min(fs, Math.floor(bh * 0.85)));
+        var tx = field.writing_start ? (field.writing_start[1] / 1000) * iW : bx + 3;
+        var uy = field.underline_y ? (field.underline_y / 1000) * iH : by + bh;
+        dp = { x: tx, y: uy - 3, fontSize: fs, color: field.text_color || '#000000' };
+      }
+      APP.dragPlacements[label] = dp;
+      // Reposition visual label
+      var el = document.querySelector('.drag-label[data-label="' + CSS.escape(label) + '"]');
+      if (el) {
+        el.style.left = Math.round(dp.x * APP.dragZoom) + 'px';
+        el.style.top  = Math.round(dp.y * APP.dragZoom) + 'px';
+        var span = el.querySelector('.drag-label-text');
+        if (span) {
+          span.style.fontSize = Math.round(dp.fontSize * APP.dragZoom) + 'px';
+        }
+      }
+      renderDragControls(label);
+    }
+
+    function closeDragModal() {
+      var modal = document.getElementById('dragModal');
+      modal.classList.remove('visible');
+      modal.style.visibility = '';
+      modal.style.display = '';
+      APP.dragActiveLabel = null;
+    }
+
+    /**
+     * buildFinalCanvas — uses user-confirmed dragPlacements for pixel-perfect rendering
+     */
+    function buildFinalCanvas() {
+      var img = APP.originalImage;
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      // Draw checkbox marks
+      APP.fields.forEach(function (field) {
+        if (field.type !== 'checkbox') return;
+        var val = APP.values[field.label];
+        if (!val) return;
+        var box = field.box_2d;
+        var bx = Math.round((box[1] / 1000) * canvas.width);
+        var by = Math.round((box[0] / 1000) * canvas.height);
+        var bw = Math.round(((box[3] - box[1]) / 1000) * canvas.width);
+        var bh = Math.round(((box[2] - box[0]) / 1000) * canvas.height);
+        ctx.strokeStyle = field.text_color || '#1e6e3e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        var pad = 3;
+        ctx.moveTo(bx + pad, by + pad); ctx.lineTo(bx + bw - pad, by + bh - pad);
+        ctx.moveTo(bx + bw - pad, by + pad); ctx.lineTo(bx + pad, by + bh - pad);
+        ctx.stroke();
+      });
+
+      // Draw text fields using USER-confirmed positions
+      APP.fields.forEach(function (field) {
+        if (field.type === 'checkbox' || field.type === 'signature') return;
+        var value = APP.values[field.label];
+        if (!value) return;
+
+        var dp = APP.dragPlacements[field.label];
+        if (!dp) return;
+
+        var fontSize = dp.fontSize;
+        ctx.font = '500 ' + fontSize + 'px "Open Sans", sans-serif';
+        ctx.fillStyle = dp.color;
+        ctx.textBaseline = 'alphabetic';
+
+        // Compute max width: right edge of field box - x position - 4px padding
+        var box = field.box_2d;
+        var rightEdge = ((box[3]) / 1000) * canvas.width;
+        var maxW = Math.max(20, rightEdge - dp.x - 4);
+
+        // Shrink font if text overflows
+        var w = ctx.measureText(value).width;
+        while (w > maxW && fontSize > 6) {
+          fontSize--;
+          ctx.font = '500 ' + fontSize + 'px "Open Sans", sans-serif';
+          w = ctx.measureText(value).width;
+        }
+        ctx.fillText(value, dp.x, dp.y, maxW);
+      });
+
+      return canvas;
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  STEP 6 — DOWNLOAD (now opens drag modal first)
+    // ═════════════════════════════════════════════════════════
+    function downloadJPG() {
+      openDragModal('jpg');
+    }
+
+    function downloadPDF() {
+      openDragModal('pdf');
+    }
+
+    function shareWhatsApp() {
+      openDragModal('whatsapp');
+    }
+
+    /** Called when user clicks "Confirm & Download" in the modal */
+    async function confirmDragAndDownload(type) {
+      closeDragModal();
+      showLoading('Generating final ' + (type === 'pdf' ? 'PDF' : 'image') + '…');
+
+      // Wait for fonts to be loaded
+      await document.fonts.ready;
+
+      var canvas = buildFinalCanvas();
+
+      try {
+        if (type === 'jpg') {
+          var link = document.createElement('a');
+          link.download = 'formease-filled-form.jpg';
+          link.href = canvas.toDataURL('image/jpeg', 0.95);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          hideLoading();
+          showToast('✓ Image downloaded!', 'success');
+
+        } else if (type === 'pdf') {
+          var imgData = canvas.toDataURL('image/jpeg', 0.95);
+          var { jsPDF } = window.jspdf;
+          var orientation = canvas.width > canvas.height ? 'l' : 'p';
+          var pdf = new jsPDF({ orientation, unit: 'px', format: [canvas.width, canvas.height] });
+          pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+          pdf.save('formease-filled-form.pdf');
+          hideLoading();
+          showToast('✓ PDF downloaded!', 'success');
+
+        } else if (type === 'whatsapp') {
+          var blob = await new Promise(function (resolve) {
+            canvas.toBlob(resolve, 'image/jpeg', 0.95);
+          });
+          var file = new File([blob], 'formease-filled-form.jpg', { type: 'image/jpeg' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            hideLoading();
+            await navigator.share({ title: 'FormEase — Filled Form', files: [file] });
+          } else {
+            var link2 = document.createElement('a');
+            link2.download = 'formease-filled-form.jpg';
+            link2.href = canvas.toDataURL('image/jpeg', 0.95);
+            document.body.appendChild(link2);
+            link2.click();
+            document.body.removeChild(link2);
+            hideLoading();
+            showToast('Share not supported — image downloaded. Share manually on WhatsApp.', 'info');
+          }
+        }
+
+        // Update live preview on main page
+        var liveCanvas = document.getElementById('livePreviewCanvas');
+        var lctx = liveCanvas.getContext('2d');
+        liveCanvas.width = canvas.width;
+        liveCanvas.height = canvas.height;
+        lctx.drawImage(canvas, 0, 0);
+        document.getElementById('previewImage').style.display = 'none';
+        liveCanvas.style.display = 'block';
+        document.getElementById('livePreviewLabel').style.display = 'block';
+        document.getElementById('livePreviewLabel').textContent = '✓ Final filled form';
+
+      } catch (err) {
+        hideLoading();
+        if (err.name !== 'AbortError') {
+          showToast((type === 'pdf' ? 'PDF' : 'Download') + ' failed: ' + err.message, 'error');
+          console.error('confirmDragAndDownload error:', err);
+        }
+      }
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  UI HELPERS — Render Fields
+    // ═════════════════════════════════════════════════════════
+    function renderFields() {
+      const container = document.getElementById('fieldsContainer');
+      container.innerHTML = '';
+
+      if (APP.fields.length === 0) {
+        container.innerHTML = '<div class="fields-empty">Upload a form to detect fields</div>';
+        document.getElementById('fieldsCount').textContent = '';
+        return;
+      }
+
+      const filled = APP.fields.filter(f => APP.values[f.label]).length;
+      document.getElementById('fieldsCount').textContent = `${filled}/${APP.fields.length} filled`;
+
+      APP.fields.forEach((field, idx) => {
+        const row = document.createElement('div');
+        row.className = 'field-row';
+
+        const label = document.createElement('span');
+        label.className = 'field-label';
+        label.textContent = field.label;
+        row.appendChild(label);
+
+        const right = document.createElement('div');
+        right.className = 'field-right';
+
+        const val = APP.values[field.label];
+
+        if (val) {
+          const valueEl = document.createElement('span');
+          valueEl.className = 'field-value';
+          valueEl.textContent = val;
+          valueEl.title = 'Click to edit';
+          valueEl.addEventListener('click', () => startInlineEdit(idx, valueEl, right));
+
+          const check = document.createElement('span');
+          check.className = 'check-icon';
+          check.textContent = '✓';
+
+          const x = document.createElement('span');
+          x.className = 'x-icon';
+          x.textContent = '✕';
+          x.title = 'Clear';
+          x.addEventListener('click', () => {
+            APP.values[field.label] = null;
+            renderFields();
+            renderTags();
+            checkAllFilled();
+          });
+
+          right.appendChild(valueEl);
+          right.appendChild(check);
+          right.appendChild(x);
+        } else {
+          const awaiting = document.createElement('span');
+          awaiting.className = 'awaiting';
+          awaiting.textContent = 'Awaiting input…';
+          awaiting.style.cursor = 'pointer';
+          awaiting.title = 'Click to type a value';
+          awaiting.addEventListener('click', () => {
+            // Create inline input
+            const input = document.createElement('input');
+            input.className = 'field-input';
+            input.placeholder = 'Type value…';
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                const v = input.value.trim();
+                if (v) {
+                  APP.values[field.label] = v;
+                  renderFields();
+                  renderTags();
+                  checkAllFilled();
+                  quickLivePreview();
+                }
+              }
+              if (e.key === 'Escape') renderFields();
+            });
+            input.addEventListener('blur', () => {
+              const v = input.value.trim();
+              if (v) {
+                APP.values[field.label] = v;
+                renderFields();
+                renderTags();
+                checkAllFilled();
+                quickLivePreview();
+              } else {
+                renderFields();
+              }
+            });
+            right.innerHTML = '';
+            right.appendChild(input);
+            input.focus();
+          });
+
+          right.appendChild(awaiting);
+        }
+
+        row.appendChild(right);
+        container.appendChild(row);
+      });
+    }
+
+    function startInlineEdit(idx, valueEl, container) {
+      const field = APP.fields[idx];
+      const input = document.createElement('input');
+      input.className = 'field-input';
+      input.value = APP.values[field.label] || '';
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const v = input.value.trim();
+          if (v) APP.values[field.label] = v;
+          else APP.values[field.label] = null;
+          renderFields();
+          renderTags();
+          checkAllFilled();
+        }
+        if (e.key === 'Escape') renderFields();
+      });
+
+      input.addEventListener('blur', () => {
+        const v = input.value.trim();
+        if (v) APP.values[field.label] = v;
+        renderFields();
+        renderTags();
+        checkAllFilled();
+      });
+
+      container.innerHTML = '';
+      container.appendChild(input);
+      input.focus();
+      input.select();
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  UI HELPERS — Tags
+    // ═════════════════════════════════════════════════════════
+    function renderTags() {
+      const row = document.getElementById('tagsRow');
+      row.innerHTML = '';
+
+      APP.fields.forEach(field => {
+        const tag = document.createElement('span');
+        const val = APP.values[field.label];
+
+        if (val) {
+          tag.className = 'tag green';
+          tag.textContent = field.label + ' ✓';
+        } else {
+          tag.className = 'tag amber';
+          tag.textContent = field.label + ' (needed)';
+        }
+
+        row.appendChild(tag);
+      });
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  UI HELPERS — Stepper
+    // ═════════════════════════════════════════════════════════
+    function updateStep(num, state) {
+      const numEl = document.getElementById('stepNum' + num);
+      const labelEl = document.getElementById('stepLabel' + num);
+
+      numEl.className = 'step-num ' + state;
+      labelEl.className = 'step-label ' + state;
+
+      if (state === 'done') {
+        numEl.textContent = '✓';
+        // Mark preceding line as done
+        if (num > 1) {
+          document.getElementById('stepLine' + (num - 1)).classList.add('done');
+        }
+      } else {
+        numEl.textContent = num;
+      }
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  UI HELPERS — Check All Filled & Enable Download
+    // ═════════════════════════════════════════════════════════
+    function checkAllFilled() {
+      const filled = APP.fields.filter(f => APP.values[f.label]).length;
+      const total = APP.fields.length;
+
+      // Enable download if at least some fields are filled
+      if (filled > 0) {
+        updateStep(3, 'done');
+        updateStep(4, 'active');
+        document.getElementById('stepLine3').classList.add('done');
+
+        const dlBox = document.getElementById('downloadBox');
+        dlBox.classList.remove('disabled-section');
+
+        const btnJPG = document.getElementById('btnDownloadJPG');
+        const btnPDF = document.getElementById('btnDownloadPDF');
+        btnJPG.disabled = false;
+        btnJPG.classList.add('enabled');
+        btnPDF.disabled = false;
+        btnPDF.classList.add('enabled');
+
+        if (filled === total) {
+          document.getElementById('downloadNote').textContent = `All ${total} fields filled. Ready to download!`;
+          updateStep(4, 'done');
+        } else {
+          document.getElementById('downloadNote').textContent =
+            `${filled}/${total} fields filled. You can still download a partial form.`;
+        }
+      }
+    }
+
+    // ═════════════════════════════════════════════════════════
+    //  UI HELPERS — Loading & Toast
+    // ═════════════════════════════════════════════════════════
+    function showLoading(msg, subtext) {
+      document.getElementById('loadingText').textContent = msg || 'Processing\u2026';
+      // Auto-detect phase progress from message like "Phase 2 / 4"
+      var phaseMatch = (msg || '').match(/Phase\s+(\d+)\s*\/\s*(\d+)/i);
+      if (phaseMatch) {
+        var pct = Math.round((parseInt(phaseMatch[1]) / parseInt(phaseMatch[2])) * 100);
+        document.getElementById('loadingBar').style.width = pct + '%';
+        var phaseSubtexts = {
+          1: 'Gemini is locating exact pixel positions for each field',
+          2: 'Drawing text onto form canvas with computed coordinates',
+          3: 'Gemini is visually inspecting each placement for errors',
+          4: 'Gemini is doing a final precision quality check'
+        };
+        document.getElementById('loadingSubtext').textContent =
+          subtext || phaseSubtexts[parseInt(phaseMatch[1])] || 'Please wait…';
+      } else {
+        document.getElementById('loadingBar').style.width = '10%';
+        document.getElementById('loadingSubtext').textContent = subtext || 'Please wait\u2026';
+      }
+      document.getElementById('loadingOverlay').classList.add('visible');
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingBar').style.width = '100%';
+      setTimeout(function () {
+        document.getElementById('loadingOverlay').classList.remove('visible');
+        document.getElementById('loadingBar').style.width = '0%';
+      }, 350);
+    }
+
+    let toastTimer = null;
+    function showToast(msg, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast ' + (type || 'info');
+
+      clearTimeout(toastTimer);
+      requestAnimationFrame(() => {
+        toast.classList.add('visible');
+        toastTimer = setTimeout(() => {
+          toast.classList.remove('visible');
+        }, 4000);
+      });
+    }
+  </script>
+
+</body>
+
+</html>
